@@ -1,0 +1,44 @@
+import { MetricCard } from '@/components/dashboard/MetricCard';
+import { WhatIfScenario } from '@/components/dashboard/WhatIfScenario';
+import { summaryMetrics } from '@/data/mockData';
+
+export default function Dashboard() {
+  return (
+    <div className="space-y-6">
+      {/* Summary Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          title="Total Scope 3 Emissions"
+          value={summaryMetrics.totalEmissions}
+          unit="tCO₂e"
+          variant="green"
+        />
+        <MetricCard
+          title={`Top Hotspot: ${summaryMetrics.topHotspot}`}
+          value={summaryMetrics.topHotspotEmissions}
+          unit="tCO₂e"
+          variant="yellow"
+        />
+        <MetricCard
+          title="Potential Reduction Identified"
+          value={summaryMetrics.potentialReduction}
+          unit="tCO₂e"
+          variant="blue"
+        />
+        <MetricCard
+          title="Improvement Suggestions"
+          value={summaryMetrics.improvementSuggestions}
+          unit="Opportunities"
+          variant="teal"
+        />
+      </div>
+
+      {/* What-If Scenario */}
+      <WhatIfScenario 
+        currentEmissions={8450}
+        projectedSavings={540}
+        costSavings={175000}
+      />
+    </div>
+  );
+}
