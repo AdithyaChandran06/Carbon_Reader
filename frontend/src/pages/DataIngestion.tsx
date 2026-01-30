@@ -113,9 +113,9 @@ export default function DataIngestion() {
         </TabsList>
 
         <TabsContent value="invoices" className="mt-6">
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-2">
             {/* Upload Area */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6">
               <Card>
                 <CardContent className="pt-6">
                   <div
@@ -193,54 +193,6 @@ export default function DataIngestion() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* API Connectors */}
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Logistics API Simulators</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {logisticsProviders.map((provider) => (
-                    <div
-                      key={provider.name}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-secondary/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{provider.logo}</span>
-                        <span className="font-medium">{provider.name}</span>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        Connect (Mock) →
-                      </Button>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6 space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">🔌</span>
-                      <span className="font-medium">Custom API</span>
-                    </div>
-                    <Button variant="default" size="sm">
-                      Create
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">📊</span>
-                      <span className="font-medium">ERP Integration</span>
-                    </div>
-                    <Button variant="default" size="sm">
-                      Create
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </div>
         </TabsContent>
 
@@ -261,11 +213,52 @@ export default function DataIngestion() {
         </TabsContent>
 
         <TabsContent value="api" className="mt-6">
-          <Card>
-            <CardContent className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">API integrations management coming soon...</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Logistics API Simulators</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {logisticsProviders.map((provider) => (
+                  <div
+                    key={provider.name}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-secondary/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{provider.logo}</span>
+                      <span className="font-medium">{provider.name}</span>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      Connect (Mock) →
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6 space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🔌</span>
+                    <span className="font-medium">Custom API</span>
+                  </div>
+                  <Button variant="default" size="sm">
+                    Create
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📊</span>
+                    <span className="font-medium">ERP Integration</span>
+                  </div>
+                  <Button variant="default" size="sm">
+                    Create
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -34,6 +34,17 @@ export default function HotspotAnalysis() {
     );
   }
 
+  if (suppliers.length === 0 && transportModes.length === 0 && materialHotspots.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-lg text-muted-foreground mb-2">No hotspot data available</p>
+          <p className="text-sm text-muted-foreground">Upload your data files to analyze emission hotspots</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="suppliers" className="w-full">

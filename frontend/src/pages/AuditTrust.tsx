@@ -26,6 +26,17 @@ export default function AuditTrust() {
     );
   }
 
+  if (dataLineage.length === 0 && emissionFactors.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-lg text-muted-foreground mb-2">No audit data available</p>
+          <p className="text-sm text-muted-foreground">Upload your data files to track data lineage and audit trail</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="lineage" className="w-full">
