@@ -213,48 +213,123 @@ export default function DataIngestion() {
         </TabsContent>
 
         <TabsContent value="api" className="mt-6">
-          <div className="space-y-4">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Logistics API Integrations */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Logistics API Simulators</CardTitle>
+                <CardTitle className="text-lg">Logistics & Transport APIs</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {logisticsProviders.map((provider) => (
                   <div
                     key={provider.name}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-secondary/50 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{provider.logo}</span>
-                      <span className="font-medium">{provider.name}</span>
+                      <div>
+                        <span className="font-medium block">{provider.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {provider.name === 'DHL' ? 'Express shipping data' : 
+                           provider.name === 'Maersk' ? 'Ocean freight tracking' : 
+                           'Air cargo emissions'}
+                        </span>
+                      </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Connect (Mock) →
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {provider.connected ? 'Connected' : 'Not Connected'}
+                      </Badge>
+                      <Button variant="outline" size="sm" disabled>
+                        Setup
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
+            {/* ERP & Business Systems */}
             <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg border">
+              <CardHeader>
+                <CardTitle className="text-lg">ERP & Business Systems</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-4 rounded-lg border">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">🔌</span>
-                    <span className="font-medium">Custom API</span>
+                    <span className="text-2xl">💼</span>
+                    <div>
+                      <span className="font-medium block">SAP Integration</span>
+                      <span className="text-xs text-muted-foreground">Material master data sync</span>
+                    </div>
                   </div>
-                  <Button variant="default" size="sm">
-                    Create
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                    <Button variant="outline" size="sm" disabled>
+                      Setup
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border">
+                <div className="flex items-center justify-between p-4 rounded-lg border">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">📊</span>
-                    <span className="font-medium">ERP Integration</span>
+                    <div>
+                      <span className="font-medium block">Oracle ERP Cloud</span>
+                      <span className="text-xs text-muted-foreground">Procurement & supply chain data</span>
+                    </div>
                   </div>
-                  <Button variant="default" size="sm">
-                    Create
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                    <Button variant="outline" size="sm" disabled>
+                      Setup
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🔧</span>
+                    <div>
+                      <span className="font-medium block">Microsoft Dynamics</span>
+                      <span className="text-xs text-muted-foreground">Inventory & logistics data</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                    <Button variant="outline" size="sm" disabled>
+                      Setup
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Custom API Configuration */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-lg">Custom API Configuration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border p-6 bg-muted/50">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                      <span className="text-2xl">🔌</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-2">Connect Your Custom Data Sources</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Integrate your proprietary systems using REST APIs, webhooks, or scheduled data imports. 
+                        Support for CSV, JSON, and XML formats.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button variant="default" size="sm" disabled>
+                          Create API Connection
+                        </Button>
+                        <Button variant="outline" size="sm" disabled>
+                          View Documentation
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

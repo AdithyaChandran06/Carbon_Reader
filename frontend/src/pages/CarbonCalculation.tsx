@@ -47,6 +47,7 @@ export default function CarbonCalculation() {
 
   const materialFactors = emissionFactors.filter(f => f.category === 'Materials');
   const transportFactors = emissionFactors.filter(f => f.category === 'Transport');
+  const energyFactors = emissionFactors.filter(f => f.category === 'Energy');
 
   if (factorsLoading || categoryLoading) {
     return (
@@ -59,206 +60,250 @@ export default function CarbonCalculation() {
   if (emissionFactors.length === 0 && categoryBreakdown.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <p className="text-lg text-muted-foreground mb-2">No emission data available</p>
-          <p className="text-sm text-muted-foreground">Upload your data files to start calculating emissions</p>
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="rounded-full bg-muted p-4">
+              <Truck className="h-12 w-12 text-muted-foreground" />
+            </div>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground mb-2">No Calculation Data Yet</p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Upload your emission data files to start calculating carbon footprints across materials, transport, and energy.
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
+  const totalEmissions = categoryBreakdown.reduce((sum, cat) => sum + (cat.emissions || 0), 0);
+
   return (
     <div className="space-y-6">
-      {/* Formula Banner */}
-      <Card>
+      {/* Calculation Formula Card */}
+      <Card className="border-2 border-primary/20">
         <CardContent className="py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Activity Data × Emission Factor = CO₂e
-              </h2>
-              
-              <div className="flex items-center gap-3 text-sm">
-                <span className="font-medium text-muted-foreground">Example Calculation</span>
-                <span className="text-muted-foreground">(for Transport):</span>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-lg">📐</span>
+                </div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Carbon Emission Calculation Formula
+                </h2>
               </div>
               
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <Badge variant="info" className="px-4 py-2 text-sm font-mono">
-                  5,000 km
+              <div className="flex items-center gap-3 flex-wrap bg-muted/50 p-4 rounded-lg">
+                <Badge variant="outline" className="px-4 py-2 text-sm font-semibold">
+                  Activity Data
                 </Badge>
-                <span className="text-muted-foreground font-bold">×</span>
-                <Badge variant="success" className="px-4 py-2 text-sm">
-                  Full Truck
+                <span className="text-lg font-bold text-muted-foreground">×</span>
+                <Badge variant="outline" className="px-4 py-2 text-sm font-semibold">
+                  Emission Factor
                 </Badge>
-                <span className="text-muted-foreground font-bold">×</span>
-                <Badge variant="warning" className="px-4 py-2 text-sm font-mono">
-                  0.12 kg CO₂e/ton-km
-                </Badge>
-                <span className="text-muted-foreground font-bold">=</span>
-                <Badge className="px-4 py-2 text-sm font-mono bg-foreground text-background">
-                  600 tCO₂e
+                <span className="text-lg font-bold text-muted-foreground">=</span>
+                <Badge className="px-4 py-2 text-sm font-semibold bg-primary">
+                  CO₂e Emissions
                 </Badge>
               </div>
-            </div>
-            
-            <div className="hidden lg:flex items-center justify-center w-32 h-24 bg-secondary rounded-lg">
-              <Truck className="h-16 w-16 text-primary" />
+
+              <p className="text-xs text-muted-foreground mt-3">
+                Example: 1000 kg of Steel × 1.80 kg CO₂e/kg = 1,800 kg CO₂e
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* CO2e Breakdown Chart */}
+      {/* Summary Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">CO₂e Breakdown</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              CO₂e: <span className="font-bold text-foreground">1,001 tCO₂e</span>
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryBreakdown}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={renderCustomizedLabel}
-                    innerRadius={60}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {categoryBreakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number, name: string) => [`${value}%`, name]}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            
-            <div className="mt-4 space-y-2">
-              {categoryBreakdown.map((cat) => (
-                <div key={cat.name} className="flex items-center gap-3">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: cat.color }}
-                  />
-                  <span className="text-sm text-foreground">{cat.name}</span>
-                  <span className="text-sm font-semibold ml-auto">{cat.value}%</span>
-                </div>
-              ))}
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Emissions</p>
+                <p className="text-2xl font-bold">{totalEmissions.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">tCO₂e</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                <span className="text-2xl">🌍</span>
+              </div>
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Emission Factors</p>
+                <p className="text-2xl font-bold">{emissionFactors.length}</p>
+                <p className="text-xs text-muted-foreground">Active factors</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <span className="text-2xl">📊</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Categories</p>
+                <p className="text-2xl font-bold">{categoryBreakdown.length}</p>
+                <p className="text-xs text-muted-foreground">Data sources</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                <span className="text-2xl">📦</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Emission Factor Detail */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* CO2e Breakdown Chart */}
+        {categoryBreakdown.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Emissions Breakdown by Category</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomizedLabel}
+                      innerRadius={60}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {categoryBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [`${value}%`, 'Percentage']}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="mt-4 space-y-2">
+                {categoryBreakdown.map((cat) => (
+                  <div key={cat.name} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      <span className="text-sm font-medium">{cat.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-mono">{cat.emissions?.toLocaleString() || 0} tCO₂e</span>
+                      <Badge variant="secondary" className="font-mono">{cat.value}%</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Emission Factors Summary */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Emission Factor: Steel</CardTitle>
+            <CardTitle className="text-lg">Emission Factors Database</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-center py-6 bg-secondary/50 rounded-lg mb-6">
-              <p className="text-4xl font-bold text-foreground">1.80</p>
-              <p className="text-sm text-muted-foreground mt-1">kg CO₂e per kg</p>
+          <CardContent className="space-y-4">
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">📦 Materials</span>
+                <Badge variant="secondary">{materialFactors.length} factors</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Steel, Aluminum, Plastic, Concrete, and more
+              </p>
             </div>
-            
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Cited:</span>
-                <span className="font-medium">Ecoinvent Database</span>
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">🚛 Transport</span>
+                <Badge variant="secondary">{transportFactors.length} factors</Badge>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Source:</span>
-                <span className="font-medium">DEPA & CP</span>
+              <p className="text-xs text-muted-foreground">
+                Truck, Ship, Rail, Air freight modes
+              </p>
+            </div>
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">⚡ Energy</span>
+                <Badge variant="secondary">{energyFactors.length} factors</Badge>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Confidence rating:</span>
-                <Badge variant="high">High</Badge>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Electricity, Natural Gas, Renewable sources
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Emission Factor Tables */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Material Emission Factors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Material / Mode</TableHead>
-                  <TableHead>Region</TableHead>
-                  <TableHead className="text-right">Emission Factor</TableHead>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">All Emission Factors</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Category</TableHead>
+                <TableHead>Material / Mode</TableHead>
+                <TableHead>Region</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead className="text-right">Emission Factor</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {emissionFactors.slice(0, 10).map((factor) => (
+                <TableRow key={factor.id}>
+                  <TableCell>
+                    <Badge variant="outline" className="gap-1">
+                      {factor.category === 'Materials' ? '📦' : factor.category === 'Transport' ? '🚛' : '⚡'} {factor.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">{factor.materialOrMode}</TableCell>
+                  <TableCell>{factor.region}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{factor.source}</TableCell>
+                  <TableCell className="text-right font-mono">
+                    <span className="font-semibold">{factor.factor.toFixed(3)}</span>
+                    <span className="text-xs text-muted-foreground ml-1">{factor.unit}</span>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {materialFactors.map((factor) => (
-                  <TableRow key={factor.id}>
-                    <TableCell>
-                      <Badge variant="secondary" className="gap-1">
-                        📦 Material
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{factor.materialOrMode}</TableCell>
-                    <TableCell>{factor.region}</TableCell>
-                    <TableCell className="text-right font-mono">
-                      <span className="font-semibold">{factor.factor.toFixed(2)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">{factor.unit}</span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Transport Emission Factors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Material / Mode</TableHead>
-                  <TableHead>Region</TableHead>
-                  <TableHead className="text-right">Emission Factor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transportFactors.map((factor) => (
-                  <TableRow key={factor.id}>
-                    <TableCell>
-                      <Badge variant="secondary" className="gap-1">
-                        🚛 Transport
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{factor.materialOrMode}</TableCell>
-                    <TableCell>{factor.region}</TableCell>
-                    <TableCell className="text-right font-mono">
-                      <span className="font-semibold">{factor.factor.toFixed(3)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">{factor.unit}</span>
-                    </TableCell>
+              ))}
+            </TableBody>
+          </Table>
+          {emissionFactors.length > 10 && (
+            <div className="mt-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Showing 10 of {emissionFactors.length} emission factors
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
                   </TableRow>
                 ))}
               </TableBody>

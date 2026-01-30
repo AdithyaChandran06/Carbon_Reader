@@ -40,13 +40,13 @@ export function AppLayout() {
       >
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 px-4 border-b border-sidebar-border">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-accent">
-            <Leaf className="h-5 w-5 text-sidebar-accent-foreground" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-600">
+            <Leaf className="h-5 w-5 text-white" />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-semibold">CarbonIQ</span>
-              <span className="text-xs text-sidebar-foreground/70">Intelligence Platform</span>
+              <span className="text-sm font-semibold">Scope Zero</span>
+              <span className="text-xs text-sidebar-foreground/70">Carbon Accounting</span>
             </div>
           )}
         </div>
@@ -91,9 +91,6 @@ export function AppLayout() {
         <header className="flex h-16 items-center justify-between border-b bg-card px-6">
           <h1 className="text-xl font-semibold text-foreground">{currentPage}</h1>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-              <Bell className="h-5 w-5" />
-            </Button>
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />
             </Button>
