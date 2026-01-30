@@ -1,12 +1,31 @@
-import { Download, FileCheck, Award } from 'lucide-react';
+import { Download, FileCheck, Award, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { mockDataLineage, mockEmissionFactors } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { getDataLineage, getEmissionFactors } from '@/services/api';
 
 export default function AuditTrust() {
+  const { data: dataLineage = [], isLoading: lineageLoading } = useQuery({
+    queryKey: ['dataLineage'],
+    queryFn: getDataLineage,
+  });
+
+  const { data: emissionFactors = [], isLoading: factorsLoading } = useQuery({
+    queryKey: ['emissionFactors'],
+    queryFn: getEmissionFactors,
+  });
+
+  if (lineageLoading || factorsLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="lineage" className="w-full">
@@ -35,7 +54,7 @@ export default function AuditTrust() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockDataLineage.map((item) => (
+                    {dataLineage.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -174,7 +193,7 @@ export default function AuditTrust() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockEmissionFactors.map((factor) => (
+                  {emissionFactors.map((factor) => (
                     <TableRow key={factor.id}>
                       <TableCell>
                         <Badge variant="secondary">{factor.category}</Badge>

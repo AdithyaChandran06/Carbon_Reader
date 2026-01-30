@@ -1,52 +1,84 @@
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RecommendationCard } from '@/components/dashboard/RecommendationCard';
 import { WhatIfScenario } from '@/components/dashboard/WhatIfScenario';
-import { Card, CardContent } from '@/components/ui/card';
-import { mockRecommendations, summaryMetrics } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { getSummaryMetrics, getRecommendations } from '@/services/api';
+import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Dashboard() {
+  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useQuery({
+    queryKey: ['summaryMetrics'],
+    queryFn: getSummaryMetrics,
+  });
+
+  const { data: recommendations = [], isLoading: recsLoading } = useQuery({
+    queryKey: ['recommendations'],
+    queryFn: getRecommendations,
+  });
+
+  if (metricsLoading || recsLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (metricsError) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          Failed to load dashboard data. Please ensure your API is running and configured correctly.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Summary Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Scope 3 Emissions"
-          value={summaryMetrics.totalEmissions}
+          value={metrics?.totalEmissions || 0}
           unit="tCO₂e"
           variant="green"
         />
         <MetricCard
-          title={`Top Hotspot: ${summaryMetrics.topHotspot}`}
-          value={summaryMetrics.topHotspotEmissions}
+          title={`Top Hotspot: ${metrics?.topHotspot || 'N/A'}`}
+          value={metrics?.topHotspotEmissions || 0}
           unit="tCO₂e"
           variant="yellow"
         />
         <MetricCard
           title="Potential Reduction Identified"
-          value={summaryMetrics.potentialReduction}
+          value={metrics?.potentialReduction || 0}
           unit="tCO₂e"
           variant="blue"
         />
         <MetricCard
           title="Improvement Suggestions"
-          value={summaryMetrics.improvementSuggestions}
+          value={metrics?.improvementSuggestions || 0}
           unit="Opportunities"
           variant="teal"
         />
       </div>
 
       {/* Recommendation Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {mockRecommendations.slice(0, 3).map((rec) => (
-          <RecommendationCard key={rec.id} recommendation={rec} />
-        ))}
-      </div>
+      {recommendations.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {recommendations.slice(0, 3).map((rec) => (
+            <RecommendationCard key={rec.id} recommendation={rec} />
+          ))}
+        </div>
+      )}
 
       {/* What-If Scenario */}
       <WhatIfScenario 
-        currentEmissions={8450}
-        projectedSavings={540}
-        costSavings={175000}
+        currentEmissions={metrics?.totalEmissions || 0}
+        projectedSavings={recommendations.reduce((sum, r) => sum + r.potentialReduction, 0)}
+        costSavings={recommendations.reduce((sum, r) => sum + Math.abs(r.costImpact), 0)}
       />
     </div>
   );

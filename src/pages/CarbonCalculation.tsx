@@ -1,9 +1,10 @@
-import { Truck } from 'lucide-react';
+import { Truck, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { mockEmissionFactors, categoryBreakdown } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { getEmissionFactors, getCategoryBreakdown } from '@/services/api';
 
 const RADIAN = Math.PI / 180;
 
@@ -34,8 +35,26 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 };
 
 export default function CarbonCalculation() {
-  const materialFactors = mockEmissionFactors.filter(f => f.category === 'Materials');
-  const transportFactors = mockEmissionFactors.filter(f => f.category === 'Transport');
+  const { data: emissionFactors = [], isLoading: factorsLoading } = useQuery({
+    queryKey: ['emissionFactors'],
+    queryFn: getEmissionFactors,
+  });
+
+  const { data: categoryBreakdown = [], isLoading: categoryLoading } = useQuery({
+    queryKey: ['categoryBreakdown'],
+    queryFn: getCategoryBreakdown,
+  });
+
+  const materialFactors = emissionFactors.filter(f => f.category === 'Materials');
+  const transportFactors = emissionFactors.filter(f => f.category === 'Transport');
+
+  if (factorsLoading || categoryLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

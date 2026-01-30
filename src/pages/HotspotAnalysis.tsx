@@ -4,11 +4,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { mockSuppliers, mockTransportModes, mockMaterialHotspots } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { getSupplierAnalysis, getTransportAnalysis, getMaterialHotspots } from '@/services/api';
+import { Loader2 } from 'lucide-react';
 
 const barColors = ['hsl(152, 60%, 45%)', 'hsl(175, 55%, 45%)', 'hsl(200, 60%, 50%)', 'hsl(45, 93%, 50%)'];
 
 export default function HotspotAnalysis() {
+  const { data: suppliers = [], isLoading: suppliersLoading } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: getSupplierAnalysis,
+  });
+
+  const { data: transportModes = [], isLoading: transportLoading } = useQuery({
+    queryKey: ['transportModes'],
+    queryFn: getTransportAnalysis,
+  });
+
+  const { data: materialHotspots = [], isLoading: materialsLoading } = useQuery({
+    queryKey: ['materialHotspots'],
+    queryFn: getMaterialHotspots,
+  });
+
+  if (suppliersLoading || transportLoading || materialsLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="suppliers" className="w-full">
@@ -34,7 +59,7 @@ export default function HotspotAnalysis() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockSuppliers.map((supplier, index) => (
+                    {suppliers.map((supplier, index) => (
                       <TableRow key={supplier.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -103,7 +128,7 @@ export default function HotspotAnalysis() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockMaterialHotspots.map((material) => (
+                  {materialHotspots.map((material) => (
                     <div key={material.material} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">{material.material}</span>
@@ -135,7 +160,7 @@ export default function HotspotAnalysis() {
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mockMaterialHotspots}>
+                    <BarChart data={materialHotspots}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis 
                         dataKey="material" 
@@ -155,7 +180,7 @@ export default function HotspotAnalysis() {
                         formatter={(value: number) => [`${value} tCO₂e`, 'Emissions']}
                       />
                       <Bar dataKey="emissions" radius={[4, 4, 0, 0]}>
-                        {mockMaterialHotspots.map((_, index) => (
+                        {materialHotspots.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
                         ))}
                       </Bar>
@@ -176,7 +201,7 @@ export default function HotspotAnalysis() {
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mockTransportModes} layout="vertical">
+                    <BarChart data={transportModes} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis 
                         type="number"
@@ -210,7 +235,7 @@ export default function HotspotAnalysis() {
                 <CardTitle className="text-lg">Mode Comparison</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {mockTransportModes.map((mode, index) => (
+                {transportModes.map((mode, index) => (
                   <div
                     key={mode.mode}
                     className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-secondary/30 transition-colors"

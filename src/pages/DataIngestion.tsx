@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react';
-import { Upload, FileText, Truck, Users, Link2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Upload, FileText, Truck, Users, Link2, CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { mockUploadedFiles } from '@/data/mockData';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getUploadedFiles, uploadFile } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 import type { UploadedFile, FileStatus } from '@/types/carbon';
 
 const statusConfig: Record<FileStatus, { icon: typeof CheckCircle; variant: "success" | "warning" | "error" | "processing" }> = {
@@ -22,34 +24,45 @@ const logisticsProviders = [
 ];
 
 export default function DataIngestion() {
-  const [files, setFiles] = useState<UploadedFile[]>(mockUploadedFiles);
   const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: files = [], isLoading } = useQuery({
+    queryKey: ['uploadedFiles'],
+    queryFn: getUploadedFiles,
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: ({ file, sourceType }: { file: File; sourceType: string }) => 
+      uploadFile(file, sourceType),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['uploadedFiles'] });
+      toast({
+        title: 'File uploaded successfully',
+        description: 'Your file is being processed.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Upload failed',
+        description: error instanceof Error ? error.message : 'Failed to upload file',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     
     const droppedFiles = Array.from(e.dataTransfer.files);
-    const newFiles: UploadedFile[] = droppedFiles.map((file, index) => ({
-      id: `new-${Date.now()}-${index}`,
-      fileName: file.name,
-      sourceType: file.name.includes('invoice') ? 'Invoice' : 
-                  file.name.includes('transport') ? 'Transport' : 'Other',
-      status: 'Processing' as FileStatus,
-      uploadDate: new Date().toLocaleDateString('en-US'),
-    }));
-    
-    setFiles(prev => [...newFiles, ...prev]);
-    
-    // Simulate processing
-    setTimeout(() => {
-      setFiles(prev => prev.map(f => 
-        f.status === 'Processing' && newFiles.some(nf => nf.id === f.id)
-          ? { ...f, status: 'Processed' as FileStatus }
-          : f
-      ));
-    }, 3000);
-  }, []);
+    droppedFiles.forEach(file => {
+      const sourceType = file.name.includes('invoice') ? 'Invoice' : 
+                        file.name.includes('transport') ? 'Transport' : 'Other';
+      uploadMutation.mutate({ file, sourceType });
+    });
+  }, [uploadMutation]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
