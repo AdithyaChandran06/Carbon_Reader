@@ -1,0 +1,6 @@
+material_type,quantity,unit,supplier,region,date
+Steel,150000,kg,Supplier A,EU,2024-01-15
+Aluminum,30000,kg,Supplier B,Asia,2024-01-20
+Plastic,25000,kg,Supplier C,EU,2024-02-10
+Cardboard,10000,kg,Supplier D,Europe,2024-02-15
+Cotton,5000,kg,Supplier E,Asia,2024-03-01
