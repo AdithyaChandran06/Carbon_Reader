@@ -304,13 +304,6 @@ export default function CarbonCalculation() {
           )}
         </CardContent>
       </Card>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
