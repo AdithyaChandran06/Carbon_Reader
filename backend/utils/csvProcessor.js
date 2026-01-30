@@ -96,7 +96,7 @@ async function parseMaterialsData(row, fileId) {
     emissionFactorSource: emissionFactor.source,
     region: region,
     co2e: co2e,
-    confidenceRating: emissionFactor.confidenceRating,
+    confidenceRating: "Medium",
     sourceDocument: fileId,
     supplier: supplier,
     date: new Date(date),
@@ -138,9 +138,9 @@ async function parseTransportData(row, fileId) {
     emissionFactor: emissionFactor.factor,
     emissionFactorUnit: emissionFactor.unit,
     emissionFactorSource: emissionFactor.source,
+    confidenceRating: "Medium",
     region: "Global",
     co2e: co2e,
-    confidenceRating: emissionFactor.confidenceRating,
     sourceDocument: fileId,
     date: new Date(date),
   };
@@ -179,7 +179,7 @@ async function parseEnergyData(row, fileId) {
     emissionFactorSource: emissionFactor.source,
     region: region,
     co2e: co2e,
-    confidenceRating: emissionFactor.confidenceRating,
+    confidenceRating: "Medium",
     sourceDocument: fileId,
     date: new Date(date),
   };

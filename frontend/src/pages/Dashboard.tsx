@@ -25,11 +25,11 @@ export default function Dashboard() {
     );
   }
 
-  if (metricsError) {
+  if (metricsError || !metrics) {
     return (
       <Alert variant="destructive">
         <AlertDescription>
-          Failed to load dashboard data. Please ensure your API is running and configured correctly.
+          No data available. Please upload your emission data files to get started.
         </AlertDescription>
       </Alert>
     );
@@ -41,25 +41,25 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Scope 3 Emissions"
-          value={metrics?.totalEmissions || 0}
+          value={metrics.totalEmissions}
           unit="tCO₂e"
           variant="green"
         />
         <MetricCard
-          title={`Top Hotspot: ${metrics?.topHotspot || 'N/A'}`}
-          value={metrics?.topHotspotEmissions || 0}
+          title={`Top Hotspot: ${metrics.topHotspot || 'None'}`}
+          value={metrics.topHotspotEmissions}
           unit="tCO₂e"
           variant="yellow"
         />
         <MetricCard
           title="Potential Reduction Identified"
-          value={metrics?.potentialReduction || 0}
+          value={metrics.potentialReduction}
           unit="tCO₂e"
           variant="blue"
         />
         <MetricCard
           title="Improvement Suggestions"
-          value={metrics?.improvementSuggestions || 0}
+          value={metrics.improvementSuggestions}
           unit="Opportunities"
           variant="teal"
         />
@@ -76,7 +76,7 @@ export default function Dashboard() {
 
       {/* What-If Scenario */}
       <WhatIfScenario 
-        currentEmissions={metrics?.totalEmissions || 0}
+        currentEmissions={metrics.totalEmissions}
         projectedSavings={recommendations.reduce((sum, r) => sum + r.potentialReduction, 0)}
         costSavings={recommendations.reduce((sum, r) => sum + Math.abs(r.costImpact), 0)}
       />

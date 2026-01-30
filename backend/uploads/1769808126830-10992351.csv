@@ -1,0 +1,9 @@
+﻿invoice_number,date,supplier,item_description,quantity,unit,amount
+INV-001,15-01-2024,Steel Corp,Steel Rebar,5000,kg,25000
+INV-001,15-01-2024,Steel Corp,Steel Sheets,3000,kg,18000
+INV-002,18-01-2024,Build-It Ltd,Cement Mix,200,bags,1200
+INV-003,20-01-2024,Lumber Jacks,Pine Planks,150,pcs,4500
+INV-003,20-01-2024,Lumber Jacks,Plywood Sheets,50,pcs,2500
+INV-004,22-01-2024,Electric Wire Co,Copper Wiring,1000,meters,8000
+INV-005,25-01-2024,Pipe Pros,PVC Piping,500,meters,3500
+INV-005,25-01-2024,Pipe Pros,Elbow Joints,100,pcs,500
