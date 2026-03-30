@@ -36,8 +36,8 @@ const analyticsRoutes = require("./routes/analytics");
 const recommendationRoutes = require("./routes/recommendations");
 const dataLineageRoutes = require("./routes/dataLineage");
 
-// Routes
-app.get("/", (req, res) => {
+// API Health Check Route
+app.get("/api", (req, res) => {
   res.json({ 
     message: "Carbon Accounting API is running 🚀",
     endpoints: {
@@ -58,6 +58,15 @@ app.use("/api/emission-factors", emissionFactorRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/data-lineage", dataLineageRoutes);
+
+// Serve frontend static files
+const frontendDist = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDist));
+
+// Catch-all route to serve index.html for React Router
+app.get(/^(.*)$/, (req, res) => {
+  res.sendFile(path.join(frontendDist, "index.html"));
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

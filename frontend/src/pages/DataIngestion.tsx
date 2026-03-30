@@ -34,6 +34,7 @@ export default function DataIngestion() {
   const { data: files = [], isLoading } = useQuery({
     queryKey: ['uploadedFiles'],
     queryFn: getUploadedFiles,
+    refetchInterval: 3000, // Poll every 3s to update Processing -> Processed status
   });
 
   const uploadMutation = useMutation({

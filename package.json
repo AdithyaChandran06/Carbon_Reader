@@ -1,0 +1,10 @@
+{
+  "name": "carbon-reader-root",
+  "version": "1.0.0",
+  "description": "Root package for Render deployment",
+  "scripts": {
+    "postinstall": "npm install --prefix backend && npm install --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm start --prefix backend"
+  }
+}
