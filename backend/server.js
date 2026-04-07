@@ -42,6 +42,7 @@ const emissionFactorRoutes = require("./routes/emissionFactors");
 const analyticsRoutes      = require("./routes/analytics");
 const recommendationRoutes = require("./routes/recommendations");
 const dataLineageRoutes    = require("./routes/dataLineage");
+const systemRoutes         = require("./routes/system");
 
 // NEW: ML microservice proxy
 const mlRoutes             = require("./routes/ml");
@@ -59,6 +60,7 @@ app.get("/api", (req, res) => {
       analytics:      "/api/analytics",
       recommendations:"/api/recommendations",
       dataLineage:    "/api/data-lineage",
+      system:         "/api/system",
       ml:             "/api/ml",             // NEW
       liveFactors:    "/api/live-factors",   // NEW
     },
@@ -71,6 +73,7 @@ app.use("/api/emission-factors", emissionFactorRoutes);
 app.use("/api/analytics",        analyticsRoutes);
 app.use("/api/recommendations",  recommendationRoutes);
 app.use("/api/data-lineage",     dataLineageRoutes);
+app.use("/api/system",           systemRoutes);
 app.use("/api/ml",               mlRoutes);          // NEW
 app.use("/api/live-factors",     liveFactorRoutes);  // NEW
 

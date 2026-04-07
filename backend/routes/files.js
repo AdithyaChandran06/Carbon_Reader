@@ -76,6 +76,7 @@ async function processFileAsync(uploadedFile, filePath) {
       console.log(`✅ Processed ${emissionEntries.length} emission entries from ${uploadedFile.fileName}`);
       
       uploadedFile.status = "Processed";
+      uploadedFile.recordCount = emissionEntries.length;
       await uploadedFile.save();
     } else {
       // For PDF and Excel files, mark as processed for now
@@ -103,6 +104,7 @@ router.get("/", async (req, res) => {
       status: file.status,
       uploadDate: file.uploadDate.toLocaleDateString("en-US"),
       errorMessage: file.errorMessage,
+      recordCount: file.recordCount,
     }));
 
     res.json(formattedFiles);

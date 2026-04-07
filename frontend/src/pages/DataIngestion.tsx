@@ -1,16 +1,27 @@
 import { useState, useCallback } from 'react';
 import React from 'react';
-import { Upload, FileText, Truck, Users, Link2, CheckCircle, AlertCircle, Clock, Loader2, Database, FileSpreadsheet, Download, RefreshCw } from 'lucide-react';
+import { Upload, FileText, Truck, Users, Link2, CheckCircle, AlertCircle, Clock, Loader2, Database, FileSpreadsheet, Download, RefreshCw, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUploadedFiles, uploadFile } from '@/services/api';
+import { getUploadedFiles, uploadFile, clearDatabase } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import type { UploadedFile, FileStatus } from '@/types/carbon';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const statusConfig: Record<FileStatus, { icon: typeof CheckCircle; variant: "success" | "warning" | "error" | "processing" }> = {
   Processed: { icon: CheckCircle, variant: 'success' },
@@ -19,11 +30,7 @@ const statusConfig: Record<FileStatus, { icon: typeof CheckCircle; variant: "suc
   Error: { icon: AlertCircle, variant: 'error' },
 };
 
-const logisticsProviders = [
-  { name: 'DHL', logo: '📦', connected: false },
-  { name: 'Maersk', logo: '🚢', connected: false },
-  { name: 'FedEx', logo: '✈️', connected: false },
-];
+// Mockup data removed
 
 export default function DataIngestion() {
   const [isDragging, setIsDragging] = useState(false);
@@ -53,6 +60,25 @@ export default function DataIngestion() {
       toast({
         title: 'Upload failed',
         description: error instanceof Error ? error.message : 'Failed to upload file',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: clearDatabase,
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast({
+        title: 'Database cleared',
+        description: 'All records have been permanently deleted.',
+        variant: 'default',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Clear failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
       });
     },
@@ -125,6 +151,33 @@ export default function DataIngestion() {
                 <p className="text-3xl font-bold text-green-600">{processedFiles}</p>
                 <p className="text-xs text-muted-foreground">Processed</p>
               </div>
+              <div className="w-px h-12 bg-border" />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Reset Data
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete all uploaded files, emission data, and generated recommendations from your database.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => clearMutation.mutate()}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      {clearMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Yes, delete everything
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </CardContent>
@@ -187,7 +240,7 @@ export default function DataIngestion() {
       </div>
 
       <Tabs defaultValue="upload" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="upload" className="gap-2">
             <Upload className="h-4 w-4" />
             File Upload
@@ -199,10 +252,6 @@ export default function DataIngestion() {
           <TabsTrigger value="templates" className="gap-2">
             <Download className="h-4 w-4" />
             Templates
-          </TabsTrigger>
-          <TabsTrigger value="api" className="gap-2">
-            <Link2 className="h-4 w-4" />
-            API Integrations
           </TabsTrigger>
         </TabsList>
 
@@ -387,7 +436,7 @@ export default function DataIngestion() {
                           </TableCell>
                           <TableCell>
                             <span className="text-sm font-mono">
-                              {file.status === 'Processed' ? Math.floor(Math.random() * 500) + 50 : '-'}
+                              {file.status === 'Processed' ? (file.recordCount ?? '-') : '-'}
                             </span>
                           </TableCell>
                         </TableRow>
@@ -515,129 +564,6 @@ export default function DataIngestion() {
           </div>
         </TabsContent>
 
-        <TabsContent value="api" className="mt-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Logistics API Integrations */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Logistics & Transport APIs</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {logisticsProviders.map((provider) => (
-                  <div
-                    key={provider.name}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{provider.logo}</span>
-                      <div>
-                        <span className="font-medium block">{provider.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {provider.name === 'DHL' ? 'Express shipping data' : 
-                           provider.name === 'Maersk' ? 'Ocean freight tracking' : 
-                           'Air cargo emissions'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {provider.connected ? 'Connected' : 'Not Connected'}
-                      </Badge>
-                      <Button variant="outline" size="sm" disabled>
-                        Setup
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* ERP & Business Systems */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">ERP & Business Systems</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">💼</span>
-                    <div>
-                      <span className="font-medium block">SAP Integration</span>
-                      <span className="text-xs text-muted-foreground">Material master data sync</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
-                    <Button variant="outline" size="sm" disabled>
-                      Setup
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">📊</span>
-                    <div>
-                      <span className="font-medium block">Oracle ERP Cloud</span>
-                      <span className="text-xs text-muted-foreground">Procurement & supply chain data</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
-                    <Button variant="outline" size="sm" disabled>
-                      Setup
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🔧</span>
-                    <div>
-                      <span className="font-medium block">Microsoft Dynamics</span>
-                      <span className="text-xs text-muted-foreground">Inventory & logistics data</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
-                    <Button variant="outline" size="sm" disabled>
-                      Setup
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Custom API Configuration */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg">Custom API Configuration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border p-6 bg-muted/50">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                      <span className="text-2xl">🔌</span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2">Connect Your Custom Data Sources</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Integrate your proprietary systems using REST APIs, webhooks, or scheduled data imports. 
-                        Support for CSV, JSON, and XML formats.
-                      </p>
-                      <div className="flex gap-2">
-                        <Button variant="default" size="sm" disabled>
-                          Create API Connection
-                        </Button>
-                        <Button variant="outline" size="sm" disabled>
-                          View Documentation
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

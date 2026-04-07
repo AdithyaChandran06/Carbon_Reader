@@ -154,6 +154,13 @@ export async function getDataLineage(): Promise<DataLineage[]> {
   return apiCall<DataLineage[]>('/data-lineage');
 }
 
+// System APIs
+export async function clearDatabase(): Promise<{ message: string }> {
+  return apiCall('/system/clear-db', {
+    method: 'POST',
+  });
+}
+
 // What-If Scenario APIs
 export async function calculateWhatIfScenario(selectedRecommendationIds: string[]): Promise<{
   currentEmissions: number;

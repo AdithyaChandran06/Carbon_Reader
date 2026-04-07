@@ -26,6 +26,10 @@ const uploadedFileSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    recordCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

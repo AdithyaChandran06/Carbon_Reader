@@ -27,6 +27,7 @@ export interface UploadedFile {
   status: FileStatus;
   uploadDate: string;
   errorMessage?: string;
+  recordCount?: number;
   extractedData?: Partial<EmissionData>[];
 }
 

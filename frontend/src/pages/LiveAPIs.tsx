@@ -176,7 +176,7 @@ export default function LiveAPIs() {
             API Connection Status
           </CardTitle>
           <CardDescription>
-            Configure API keys in your backend <code>.env</code> file to enable live data.
+            Live connection statuses to external carbon data providers.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -210,13 +210,6 @@ export default function LiveAPIs() {
               })}
             </div>
           )}
-
-          <Alert className="mt-4">
-            <AlertDescription className="text-xs">
-              <strong>Free options:</strong> CO2Signal is free (just email signup). Climatiq has a free tier with 500 requests/month.
-              Carbon Interface has a free tier. Add keys to <code>backend/.env</code>.
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
 
