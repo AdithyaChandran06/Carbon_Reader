@@ -37,8 +37,9 @@ const recommendationSchema = new mongoose.Schema(
       required: true,
     },
     priority: {
-      type: Number,
-      required: true,
+      type: String, 
+      enum: ["High", "Medium", "Low"], 
+      default: "Medium"
     },
     isActive: {
       type: Boolean,
