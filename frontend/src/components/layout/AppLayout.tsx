@@ -10,7 +10,9 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
-  Leaf
+  Leaf,
+  Brain,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,6 +23,8 @@ const navigation = [
   { name: 'Carbon Calculation', href: '/calculation', icon: Calculator },
   { name: 'Hotspot Analysis', href: '/hotspots', icon: Target },
   { name: 'Audit & Trust', href: '/audit', icon: Shield },
+  { name: 'ML Insights', href: '/ml-insights', icon: Brain },
+  { name: 'Live APIs', href: '/live-apis', icon: Globe },
 ];
 
 export function AppLayout() {
