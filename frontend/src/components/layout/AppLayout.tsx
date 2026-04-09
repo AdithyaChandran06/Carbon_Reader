@@ -44,8 +44,8 @@ export function AppLayout() {
       >
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 px-4 border-b border-sidebar-border">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-600">
-            <Leaf className="h-5 w-5 text-white" />
+          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-green-600/20">
+            <img src="/logo.jpg" alt="Scope Zero Logo" className="h-full w-full object-cover" />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
