@@ -12,29 +12,40 @@ import AuditTrust from "./pages/AuditTrust";
 import NotFound from "./pages/NotFound";
 import MLInsights from "./pages/MLInsights";
 import LiveAPIs from "./pages/LiveAPIs";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import { AuthProvider } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route element={<AppLayout />}>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/data-ingestion" element={<DataIngestion />} />
             <Route path="/calculation" element={<CarbonCalculation />} />
             <Route path="/hotspots" element={<HotspotAnalysis />} />
             <Route path="/audit" element={<AuditTrust />} />
             <Route path="/ml-insights" element={<MLInsights />} />
-            <Route path="/live-apis" element={<LiveAPIs />} />
+              <Route path="/live-apis" element={<LiveAPIs />} />
+            </Route>
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

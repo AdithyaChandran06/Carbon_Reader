@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\cadit\OneDrive\Documents\Web_Devlopment\Carbon_FootPrint\Carbon_Reader\ml_service\venv
+set VIRTUAL_ENV=C:\Users\cadit\OneDrive\Documents\Web_Development\Carbon_Reader\ml_service\venv
 
 if not defined PROMPT set PROMPT=$P$G
 

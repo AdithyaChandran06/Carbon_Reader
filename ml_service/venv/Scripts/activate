@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\cadit\OneDrive\Documents\Web_Devlopment\Carbon_FootPrint\Carbon_Reader\ml_service\venv"
+VIRTUAL_ENV="C:\Users\cadit\OneDrive\Documents\Web_Development\Carbon_Reader\ml_service\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
