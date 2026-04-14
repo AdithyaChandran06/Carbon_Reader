@@ -18,11 +18,23 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:8080",
-    "http://localhost:3000",
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "http://localhost:8080",
+      "http://localhost:3000",
+      "https://carbon-reader.onrender.com"
+    ];
+    if (process.env.FRONTEND_URL) {
+      allowedOrigins.push(process.env.FRONTEND_URL);
+    }
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
@@ -30,10 +42,18 @@ app.use(express.json());
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 
+const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/ScopeZero";
 mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .connect(mongoURI, {
+    serverSelectionTimeoutMS: 5000,
+  })
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err.message);
+    if (!process.env.MONGODB_URI) {
+        console.warn("⚠️ MONGODB_URI is not defined. Ensure your MongoDB Atlas connection string is set in Render Environment Variables.");
+    }
+  });
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 const fileRoutes           = require("./routes/files");
