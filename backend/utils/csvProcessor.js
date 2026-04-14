@@ -18,7 +18,7 @@ async function resolveEmissionFactor(category, materialOrMode, region = "GLOBAL"
   // 1. Try live Climatiq via our own backend route (avoids CORS)
   try {
     const res = await fetch(
-      `http://localhost:${process.env.PORT || 5000}/api/live-factors/search?activity=${encodeURIComponent(materialOrMode)}&region=${region}`,
+      `http://127.0.0.1:${process.env.PORT || 5000}/api/live-factors/search?activity=${encodeURIComponent(materialOrMode)}&region=${region}`,
       { signal: AbortSignal.timeout(5000) }
     );
     if (res.ok) {
