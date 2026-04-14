@@ -11,7 +11,7 @@ import { Loader2, Wifi, WifiOff, Zap, Search, Globe } from 'lucide-react';
 
 const API_BASE = import.meta.env.PROD
   ? '/api'
-  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api');
+  : (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:5000/api');
 
 async function apiGet<T>(url: string): Promise<T> {
   const res = await fetch(url);

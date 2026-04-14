@@ -7,10 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE_URL = import.meta.env.PROD
-  ? '/api'
-  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api');
-
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,7 +31,7 @@ export default function Register() {
     
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
