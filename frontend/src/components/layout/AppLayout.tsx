@@ -10,9 +10,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Leaf,
+  Leaf,
   Brain,
   Globe,
-  LogOut
+  LogOut,
+  Map
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -26,6 +28,7 @@ const navigation = [
   { name: 'Audit & Trust', href: '/audit', icon: Shield },
   { name: 'ML Insights', href: '/ml-insights', icon: Brain },
   { name: 'Live APIs', href: '/live-apis', icon: Globe },
+  { name: 'Route Optimization', href: '/route-optimization', icon: Map },
 ];
 
 export function AppLayout() {
