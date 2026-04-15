@@ -11,8 +11,8 @@ import type {
 
 // Base API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api` 
-  : 'http://localhost:5000/api';
+  ? import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`
+  : 'https://carbon-reader.onrender.com/api';
 
 console.log('🔗 API Base URL:', API_BASE_URL);
 
@@ -36,10 +36,16 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     headers,
     ...options,
   });
-
   if (!response.ok) {
-    console.error('❌ API Error:', response.status, response.statusText);
-    throw new Error(`API Error: ${response.statusText}`);
+    let errorMsg = response.statusText;
+    try {
+      const errorData = await response.json();
+      errorMsg = errorData.error || errorMsg || `HTTP ${response.status}`;
+    } catch {
+      errorMsg = errorMsg || `HTTP ${response.status}`;
+    }
+    console.error('❌ API Error:', response.status, errorMsg);
+    throw new Error(`API Error: ${errorMsg}`);
   }
 
   const data = await response.json();
@@ -59,7 +65,14 @@ export async function uploadFile(file: File, sourceType: string): Promise<Upload
   });
 
   if (!response.ok) {
-    throw new Error(`Upload failed: ${response.statusText}`);
+    let errorMsg = response.statusText;
+    try {
+      const errorData = await response.json();
+      errorMsg = errorData.error || errorMsg || `HTTP ${response.status}`;
+    } catch {
+      errorMsg = errorMsg || `HTTP ${response.status}`;
+    }
+    throw new Error(`Upload failed: ${errorMsg}`);
   }
 
   return response.json();
