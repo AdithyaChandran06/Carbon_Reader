@@ -23,7 +23,8 @@ app.use(cors({
       "http://localhost:5173",
       "http://localhost:8080",
       "http://localhost:3000",
-      "https://carbon-reader.onrender.com"
+      "https://carbon-reader.onrender.com",
+      "https://carbon-reader-ywk5.vercel.app"
     ];
     if (process.env.FRONTEND_URL) {
       allowedOrigins.push(process.env.FRONTEND_URL);
@@ -101,11 +102,11 @@ app.use("/api/ml",               mlRoutes);          // NEW
 app.use("/api/live-factors",     liveFactorRoutes);  // NEW
 
 // Serve frontend
-const frontendDist = path.join(__dirname, "../frontend/dist");
-app.use(express.static(frontendDist));
-app.get(/^(.*)$/, (req, res) => {
-  res.sendFile(path.join(frontendDist, "index.html"));
-});
+// const frontendDist = path.join(__dirname, "../frontend/dist");
+// app.use(express.static(frontendDist));
+// app.get(/^(.*)$/, (req, res) => {
+//   res.sendFile(path.join(frontendDist, "index.html"));
+// });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
