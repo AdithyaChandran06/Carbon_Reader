@@ -1,4 +1,4 @@
 ml_service/venv/
 node_modules/
-backend/.env
-frontend/.env
+backend/.env/
+frontend/.env/
