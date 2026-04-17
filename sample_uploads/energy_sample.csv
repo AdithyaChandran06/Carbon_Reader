@@ -1,0 +1,3 @@
+EnergyType,Consumption,Unit,Region,Date
+Grid Electricity,15000,kWh,EU,2023-10-31
+Natural Gas,500,m3,Global,2023-10-31

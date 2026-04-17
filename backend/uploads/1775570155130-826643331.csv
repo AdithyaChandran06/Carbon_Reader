@@ -1,0 +1,5 @@
+Mode,Distance,Weight,Unit,Origin,Destination,Date
+Full Truck,800,10,km,Hamburg,Paris,2023-10-02
+Ship-Average,5000,100,km,Shanghai,Rotterdam,2023-10-08
+Rail-Europe,1200,50,km,Warsaw,Berlin,2023-10-12
+Air Freight,6000,2,km,New York,London,2023-10-18

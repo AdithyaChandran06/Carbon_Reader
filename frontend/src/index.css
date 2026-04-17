@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Carbon Intelligence Platform - ESG Design System */
+
+@layer base {
+  :root {
+    /* Core neutral tones */
+    --background: 210 20% 98%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    /* Primary - Deep forest green */
+    --primary: 152 55% 28%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Light sage */
+    --secondary: 150 20% 95%;
+    --secondary-foreground: 152 55% 28%;
+
+    /* Muted - Soft gray-green */
+    --muted: 150 10% 94%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Accent - Teal */
+    --accent: 175 60% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive - Warning red */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ESG-specific semantic colors */
+    --success: 152 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 10%;
+
+    --info: 200 85% 50%;
+    --info-foreground: 0 0% 100%;
+
+    /* Metric card colors */
+    --metric-green: 152 55% 35%;
+    --metric-green-foreground: 0 0% 100%;
+    
+    --metric-yellow: 45 93% 47%;
+    --metric-yellow-foreground: 0 0% 10%;
+    
+    --metric-blue: 200 85% 50%;
+    --metric-blue-foreground: 0 0% 100%;
+    
+    --metric-teal: 175 60% 40%;
+    --metric-teal-foreground: 0 0% 100%;
+
+    /* Hotspot colors for Pareto charts */
+    --hotspot-high: 152 60% 40%;
+    --hotspot-medium: 175 55% 45%;
+    --hotspot-low: 200 60% 55%;
+
+    /* Border and inputs */
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 152 55% 28%;
+
+    --radius: 0.625rem;
+
+    /* Sidebar */
+    --sidebar-background: 152 55% 15%;
+    --sidebar-foreground: 150 20% 95%;
+    --sidebar-primary: 150 20% 95%;
+    --sidebar-primary-foreground: 152 55% 15%;
+    --sidebar-accent: 152 55% 25%;
+    --sidebar-accent-foreground: 150 20% 95%;
+    --sidebar-border: 152 40% 25%;
+    --sidebar-ring: 175 60% 50%;
+
+    /* Chart colors */
+    --chart-1: 152 60% 45%;
+    --chart-2: 175 55% 45%;
+    --chart-3: 45 93% 50%;
+    --chart-4: 200 70% 50%;
+    --chart-5: 280 60% 55%;
+  }
+
+  .dark {
+    --background: 220 20% 8%;
+    --foreground: 150 20% 95%;
+
+    --card: 220 20% 12%;
+    --card-foreground: 150 20% 95%;
+
+    --popover: 220 20% 12%;
+    --popover-foreground: 150 20% 95%;
+
+    --primary: 152 55% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 152 30% 18%;
+    --secondary-foreground: 150 20% 90%;
+
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 15% 65%;
+
+    --accent: 175 55% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 55% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 45 90% 50%;
+    --warning-foreground: 0 0% 10%;
+
+    --info: 200 80% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --metric-green: 152 50% 40%;
+    --metric-green-foreground: 0 0% 100%;
+    
+    --metric-yellow: 45 90% 50%;
+    --metric-yellow-foreground: 0 0% 10%;
+    
+    --metric-blue: 200 80% 55%;
+    --metric-blue-foreground: 0 0% 100%;
+    
+    --metric-teal: 175 55% 45%;
+    --metric-teal-foreground: 0 0% 100%;
+
+    --hotspot-high: 152 55% 45%;
+    --hotspot-medium: 175 50% 50%;
+    --hotspot-low: 200 55% 60%;
+
+    --border: 220 20% 22%;
+    --input: 220 20% 22%;
+    --ring: 152 55% 45%;
+
+    --sidebar-background: 220 20% 6%;
+    --sidebar-foreground: 150 20% 90%;
+    --sidebar-primary: 152 55% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 15%;
+    --sidebar-accent-foreground: 150 20% 90%;
+    --sidebar-border: 220 20% 18%;
+    --sidebar-ring: 175 55% 50%;
+
+    --chart-1: 152 55% 50%;
+    --chart-2: 175 50% 50%;
+    --chart-3: 45 90% 55%;
+    --chart-4: 200 65% 55%;
+    --chart-5: 280 55% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  /* Metric card variants */
+  .metric-card-green {
+    @apply bg-[hsl(var(--metric-green))] text-[hsl(var(--metric-green-foreground))];
+  }
+  
+  .metric-card-yellow {
+    @apply bg-[hsl(var(--metric-yellow))] text-[hsl(var(--metric-yellow-foreground))];
+  }
+  
+  .metric-card-blue {
+    @apply bg-[hsl(var(--metric-blue))] text-[hsl(var(--metric-blue-foreground))];
+  }
+  
+  .metric-card-teal {
+    @apply bg-[hsl(var(--metric-teal))] text-[hsl(var(--metric-teal-foreground))];
+  }
+
+  /* Status indicators */
+  .status-success {
+    @apply text-[hsl(var(--success))];
+  }
+  
+  .status-warning {
+    @apply text-[hsl(var(--warning))];
+  }
+  
+  .status-error {
+    @apply text-[hsl(var(--destructive))];
+  }
+
+  /* Gradient for savings bars */
+  .savings-gradient {
+    background: linear-gradient(90deg, hsl(var(--success)) 0%, hsl(var(--warning)) 50%, hsl(var(--destructive)) 100%);
+  }
+}

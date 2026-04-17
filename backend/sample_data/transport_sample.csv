@@ -1,0 +1,5 @@
+mode,distance,unit,weight,origin,destination,date
+Full Truck,500,km,15000,Berlin,Paris,2024-01-10
+Ship-Average,3000,km,50000,Shanghai,Hamburg,2024-01-15
+Rail-Europe,800,km,20000,Madrid,Rome,2024-02-05
+Air Freight,2000,km,1000,New York,London,2024-02-20

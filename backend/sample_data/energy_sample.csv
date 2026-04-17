@@ -1,0 +1,4 @@
+energy_type,consumption,unit,region,date
+Grid Electricity,450000,kWh,EU,2024-01-01
+Natural Gas,2000,m³,EU,2024-01-15
+Grid Electricity,380000,kWh,Asia,2024-02-01

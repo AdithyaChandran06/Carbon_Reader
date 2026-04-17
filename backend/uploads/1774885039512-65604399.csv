@@ -1,0 +1,6 @@
+Material,Quantity,Unit,Supplier,Region,Date
+Steel,5000,kg,Acme Corp,EU,2023-10-01
+Aluminum,2000,kg,MetalWorks Inc,EU,2023-10-05
+Recycled Aluminum,3000,kg,EcoMetals,EU,2023-10-10
+Plastic,1500,kg,PolyPlastics,Global,2023-10-15
+Cotton,800,kg,TextileCo,EU,2023-10-20

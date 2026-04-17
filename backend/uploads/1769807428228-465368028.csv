@@ -1,0 +1,55 @@
+Date,Supplier,Material,Weight,Distance,TransportMode,Region
+2024-01-07,SolarGlass,Copper,1706,4638,Air Freight,Europe
+2024-01-10,Tesla Energy,Aluminum,1500,800,Cargo Ship,North America
+2024-01-10,AsianIron,Rubber,11466,7916,Rail,Europe
+2024-01-14,PacificFreight,Aluminum,3360,356,Cargo Ship,Europe
+2024-01-21,SkyCargo,Plastic,13568,2859,Rail,Asia
+2024-02-05,Vulcan Steel,Steel,5000,120,Heavy Duty Truck,Europe
+2024-02-14,TerraForm,Wood,1315,1643,Cargo Ship,Asia
+2024-02-16,AmeriCopper,Wood,9888,2004,Heavy Duty Truck,South America
+2024-02-18,NordicMetal,Rubber,13562,2317,Air Freight,Oceania
+2024-02-19,Vulcan Steel,Glass,8886,4909,Air Freight,Africa
+2024-02-24,NordicMetal,Wood,11685,2953,Cargo Ship,Oceania
+2024-03-05,Vulcan Steel,Wood,9060,4307,Heavy Duty Truck,North America
+2024-03-05,AmeriCopper,Glass,13395,1420,Rail,South America
+2024-03-12,GreenPolymer,Plastic,800,2400,Cargo Ship,Asia
+2024-03-12,Vulcan Steel,Steel,12403,3199,Air Freight,Europe
+2024-03-15,EcoSteel,Wood,6440,3710,Cargo Ship,Europe
+2024-03-21,Tesla Energy,Glass,1380,5736,Cargo Ship,Oceania
+2024-03-22,EcoSteel,Copper,13839,4649,Heavy Duty Truck,Asia
+2024-03-25,PrimeLog,Wood,5751,2345,Heavy Duty Truck,Oceania
+2024-04-01,GreenWay,Plastic,1078,3599,Rail,South America
+2024-04-03,BioPlastics,Steel,5806,2511,Heavy Duty Truck,Africa
+2024-04-10,Ameco Logistics,Steel,2200,450,Heavy Duty Truck,Asia
+2024-04-14,GlobalLogistics,Aluminum,6459,7812,Cargo Ship,South America
+2024-04-18,TerraForm,Steel,13486,2809,Air Freight,North America
+2024-04-19,PrimeLog,Steel,7909,4984,Cargo Ship,Asia
+2024-04-26,TitanAlloy,Copper,1609,6439,Heavy Duty Truck,Africa
+2024-05-13,PrimeLog,Glass,5511,2201,Rail,Oceania
+2024-05-14,EuroPolymer,Plastic,9217,3604,Heavy Duty Truck,Asia
+2024-05-16,Tesla Energy,Rubber,1453,2124,Cargo Ship,Oceania
+2024-06-21,Vulcan Steel,Cement,4890,5877,Rail,North America
+2024-06-25,CarbonNeutral Co,Copper,6943,6886,Rail,South America
+2024-06-25,TitanAlloy,Aluminum,3141,7174,Rail,Oceania
+2024-06-30,AmeriCopper,Plastic,13128,7427,Rail,North America
+2024-07-07,SkyCargo,Rubber,4426,1440,Air Freight,Africa
+2024-08-15,GreenPolymer,Wood,10312,777,Air Freight,Africa
+2024-08-16,EcoSteel,Glass,6558,95,Cargo Ship,North America
+2024-08-19,Tesla Energy,Cement,7776,3074,Heavy Duty Truck,Africa
+2024-08-27,TitanAlloy,Cement,4935,6387,Heavy Duty Truck,South America
+2024-08-30,AsianIron,Cement,9718,1372,Heavy Duty Truck,Oceania
+2024-09-24,Tesla Energy,Copper,14259,4157,Heavy Duty Truck,Oceania
+2024-10-09,SkyCargo,Aluminum,3916,3443,Cargo Ship,South America
+2024-10-30,AmeriCopper,Copper,10055,3240,Rail,South America
+2024-11-08,SkyCargo,Cement,11636,468,Cargo Ship,Oceania
+2024-11-12,OceanLogix,Wood,5346,3131,Heavy Duty Truck,Asia
+2024-11-27,GlobalLogistics,Cement,14270,429,Cargo Ship,Asia
+2024-11-29,TitanAlloy,Glass,4080,6014,Rail,South America
+2024-12-02,CarbonNeutral Co,Plastic,2260,7564,Air Freight,Africa
+2024-12-11,SkyCargo,Aluminum,14447,1783,Heavy Duty Truck,South America
+2024-12-15,PrimeLog,Rubber,5483,80,Heavy Duty Truck,South America
+2024-12-23,TerraForm,Steel,13117,6797,Cargo Ship,Oceania
+2024-12-24,TitanAlloy,Aluminum,12364,4445,Rail,Asia
+2024-12-26,PrimeLog,Wood,3983,5755,Rail,Oceania
+2024-12-29,PacificFreight,Aluminum,9040,3310,Air Freight,Europe
+2024-12-31,OceanLogix,Rubber,2206,7600,Cargo Ship,Europe
