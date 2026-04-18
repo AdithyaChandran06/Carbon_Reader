@@ -147,6 +147,10 @@ export async function getCategoryBreakdown(): Promise<Array<{
   return apiCall('/analytics/category-breakdown');
 }
 
+export async function getApiStatus(): Promise<{ message: string; endpoints?: Record<string, string> }> {
+  return apiCall('/');
+}
+
 export async function getMLHealth(): Promise<{
   mlService: { status: string };
   nodeProxy: string;

@@ -19,7 +19,7 @@ import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getMLHealth } from '@/services/api';
+import { getApiStatus } from '@/services/api';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -36,12 +36,12 @@ export function AppLayout() {
   const { user, logout } = useAuth();
   const { data: apiHealth } = useQuery({
     queryKey: ['apiHealth'],
-    queryFn: getMLHealth,
+    queryFn: getApiStatus,
     refetchInterval: 15000,
   });
 
   const currentPage = navigation.find(n => n.href === location.pathname)?.name || 'Dashboard';
-  const apiConnected = apiHealth?.nodeProxy === 'ok';
+  const apiConnected = !!apiHealth?.message;
 
   return (
     <div className="flex h-screen bg-background">

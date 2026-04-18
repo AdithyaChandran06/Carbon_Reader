@@ -28,7 +28,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { WhatIfScenario } from '@/components/dashboard/WhatIfScenario';
-import { getMLHealth, getSummaryMetrics } from '@/services/api';
+import { getApiStatus, getCategoryBreakdown, getMLHealth, getMaterialHotspots, getRecommendations, getSummaryMetrics, getSupplierAnalysis, getTransportAnalysis } from '@/services/api';
+import type { Recommendation, Supplier, TransportMode, MaterialHotspot } from '@/types/carbon';
 
 const API_BASE = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`
@@ -111,6 +112,11 @@ interface MLRecsResult {
   totalPotentialReduction: number;
 }
 
+interface ApiStatusResult {
+  message: string;
+  endpoints?: Record<string, string>;
+}
+
 const PRIORITY_VARIANT: Record<string, 'default' | 'destructive' | 'secondary' | 'outline'> = {
   High: 'destructive',
   Medium: 'outline',
@@ -125,11 +131,36 @@ const DIFFICULTY_COLOR: Record<string, string> = {
 
 const CLUSTER_COLORS = ['#1D9E75', '#378ADD', '#BA7517', '#D85A30'];
 
+function normalizeStoredRecommendations(recommendations: Recommendation[]): MLRecommendation[] {
+  return recommendations
+    .slice()
+    .sort((a, b) => a.priority - b.priority)
+    .map((recommendation, index) => ({
+      rank: index + 1,
+      title: recommendation.title,
+      description: recommendation.description,
+      type: recommendation.type,
+      currentEmissions: recommendation.currentEmissions,
+      potentialReduction: recommendation.potentialReduction,
+      percentageSavings: recommendation.percentageSavings,
+      costImpact: recommendation.costImpact,
+      implementationDifficulty: recommendation.implementationDifficulty,
+      priority: index === 0 ? 'High' : index === 1 ? 'Medium' : 'Low',
+      mlConfidence: 0.7,
+    }));
+}
+
 export default function Dashboard() {
   const { data: metrics, isLoading: metricsLoading, error: metricsError } = useQuery({
     queryKey: ['summaryMetrics'],
     queryFn: getSummaryMetrics,
     refetchInterval: 5000,
+  });
+
+  const { data: apiStatus } = useQuery<ApiStatusResult>({
+    queryKey: ['apiStatus'],
+    queryFn: getApiStatus,
+    refetchInterval: 15000,
   });
 
   const { data: apiHealth } = useQuery({
@@ -138,31 +169,66 @@ export default function Dashboard() {
     refetchInterval: 15000,
   });
 
+  const { data: categoryBreakdown = [] } = useQuery({
+    queryKey: ['categoryBreakdown'],
+    queryFn: getCategoryBreakdown,
+    enabled: !!metrics,
+    refetchInterval: 30000,
+  });
+
+  const { data: suppliers = [] } = useQuery<Supplier[]>({
+    queryKey: ['suppliers'],
+    queryFn: getSupplierAnalysis,
+    enabled: !!metrics,
+    refetchInterval: 30000,
+  });
+
+  const { data: transportModes = [] } = useQuery<TransportMode[]>({
+    queryKey: ['transportModes'],
+    queryFn: getTransportAnalysis,
+    enabled: !!metrics,
+    refetchInterval: 30000,
+  });
+
+  const { data: materialHotspots = [] } = useQuery<MaterialHotspot[]>({
+    queryKey: ['materialHotspots'],
+    queryFn: getMaterialHotspots,
+    enabled: !!metrics,
+    refetchInterval: 30000,
+  });
+
+  const { data: storedRecommendations = [] } = useQuery<Recommendation[]>({
+    queryKey: ['storedRecommendations'],
+    queryFn: getRecommendations,
+    enabled: !!metrics,
+    refetchInterval: 30000,
+  });
+
   const { data: forecastData, error: forecastError, isLoading: forecastLoading } = useQuery<ForecastResult>({
     queryKey: ['mlForecast'],
     queryFn: () => apiPost<ForecastResult>('/ml/forecast', { months_ahead: 6 }),
-    enabled: !!metrics,
+    enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
     refetchInterval: 30000,
   });
 
   const { data: anomalyData, error: anomalyError, isLoading: anomalyLoading } = useQuery<AnomalyResult>({
     queryKey: ['mlAnomalies'],
     queryFn: () => apiPost<AnomalyResult>('/ml/anomalies', { contamination: 0.1 }),
-    enabled: !!metrics,
+    enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
     refetchInterval: 30000,
   });
 
   const { data: clusterData, error: clusterError, isLoading: clusterLoading } = useQuery<ClusterResult>({
     queryKey: ['mlClusters'],
     queryFn: () => apiPost<ClusterResult>('/ml/cluster', { n_clusters: 4 }),
-    enabled: !!metrics,
+    enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
     refetchInterval: 30000,
   });
 
   const { data: mlRecsData, error: recsError, isLoading: recsLoading } = useQuery<MLRecsResult>({
     queryKey: ['mlRecommendations'],
     queryFn: () => apiPost<MLRecsResult>('/ml/recommendations'),
-    enabled: !!metrics,
+    enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
     refetchInterval: 30000,
   });
 
@@ -174,11 +240,14 @@ export default function Dashboard() {
     );
   }
 
-  const recommendations = mlRecsData?.recommendations ?? [];
+  const mlServiceOnline = apiHealth?.mlService?.status === 'ok';
+  const apiConnected = !!apiStatus?.message;
+  const recommendations = mlServiceOnline && mlRecsData?.recommendations?.length
+    ? mlRecsData.recommendations
+    : normalizeStoredRecommendations(storedRecommendations);
   const totalPotentialReduction = mlRecsData?.totalPotentialReduction ?? recommendations.reduce((sum, rec) => sum + rec.potentialReduction, 0);
   const totalCostSavings = recommendations.reduce((sum, rec) => sum + Math.abs(rec.costImpact), 0);
   const recommendationCount = recommendations.length;
-  const apiConnected = apiHealth?.nodeProxy === 'ok';
   const forecastChartData = [
     ...(forecastData?.historical ?? []).map((point) => ({
       period: point.period,
@@ -195,6 +264,23 @@ export default function Dashboard() {
   const highPriorityRecs = recommendations.filter((rec) => rec.priority === 'High');
   const mediumPriorityRecs = recommendations.filter((rec) => rec.priority === 'Medium');
   const lowPriorityRecs = recommendations.filter((rec) => rec.priority === 'Low');
+  const categoryChartData = categoryBreakdown.map((item) => ({
+    name: item.name,
+    emissions: item.emissions,
+    color: item.color,
+  }));
+  const supplierChartData = suppliers.slice(0, 5).map((supplier) => ({
+    name: supplier.name,
+    emissions: supplier.totalEmissions,
+  }));
+  const hotspotChartData = materialHotspots.slice(0, 5).map((hotspot) => ({
+    name: hotspot.material,
+    emissions: hotspot.emissions,
+  }));
+  const transportChartData = transportModes.slice(0, 5).map((mode) => ({
+    name: mode.mode,
+    emissions: mode.emissions,
+  }));
 
   return (
     <div className="space-y-6">
@@ -215,7 +301,7 @@ export default function Dashboard() {
                 Carbon Accounting Dashboard
               </h2>
               <p className="text-muted-foreground">
-                ML-driven emissions insights, forecasts, anomalies, and recommendations from your current input data.
+                ML-driven emissions insights when available, with live analytics fallbacks so the dashboard never goes empty.
               </p>
             </div>
             <div className="hidden lg:flex items-center gap-6">
@@ -235,6 +321,12 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+          {!mlServiceOnline && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+              <TriangleAlert className="h-4 w-4" />
+              ML service is offline. Showing live analytics visualizations instead of model output.
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -333,18 +425,11 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {forecastLoading && !forecastData ? (
+            {mlServiceOnline && forecastLoading && !forecastData ? (
               <div className="flex h-72 items-center justify-center text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-            ) : forecastError ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Unable to load forecast data. {forecastError instanceof Error ? forecastError.message : ''}
-                </AlertDescription>
-              </Alert>
-            ) : forecastChartData.length > 0 ? (
+            ) : mlServiceOnline && forecastChartData.length > 0 ? (
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={forecastChartData} margin={{ top: 8, right: 20, bottom: 0, left: 0 }}>
@@ -371,6 +456,27 @@ export default function Dashboard() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+            ) : categoryChartData.length > 0 ? (
+              <div className="space-y-4">
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={categoryChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(value: number) => [`${value?.toFixed(1)} tCO₂e`, 'Emissions']} />
+                      <Bar dataKey="emissions" name="Category emissions">
+                        {categoryChartData.map((entry, index) => (
+                          <Cell key={entry.name} fill={entry.color || CLUSTER_COLORS[index % CLUSTER_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Live category breakdown is shown because the ML forecast service is unavailable.
+                </p>
+              </div>
             ) : (
               <p className="py-10 text-center text-sm text-muted-foreground">No forecast data available yet.</p>
             )}
@@ -388,18 +494,11 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {clusterLoading && !clusterData ? (
+            {mlServiceOnline && clusterLoading && !clusterData ? (
               <div className="flex h-72 items-center justify-center text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-            ) : clusterError ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Unable to load clusters. {clusterError instanceof Error ? clusterError.message : ''}
-                </AlertDescription>
-              </Alert>
-            ) : clusterData?.clusters?.length ? (
+            ) : mlServiceOnline && clusterData?.clusters?.length ? (
               <>
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
@@ -433,6 +532,27 @@ export default function Dashboard() {
                   ))}
                 </div>
               </>
+            ) : supplierChartData.length > 0 ? (
+              <>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={supplierChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(value: number) => [`${value?.toFixed(1)} tCO₂e`, 'Supplier emissions']} />
+                      <Bar dataKey="emissions" name="Supplier emissions">
+                        {supplierChartData.map((_, index) => (
+                          <Cell key={index} fill={CLUSTER_COLORS[index % CLUSTER_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Supplier footprint overview is shown because the ML clustering service is unavailable.
+                </p>
+              </>
             ) : (
               <p className="py-10 text-center text-sm text-muted-foreground">No clusters available yet.</p>
             )}
@@ -452,18 +572,11 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {anomalyLoading && !anomalyData ? (
+            {mlServiceOnline && anomalyLoading && !anomalyData ? (
               <div className="flex h-64 items-center justify-center text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-            ) : anomalyError ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Unable to load anomaly detection. {anomalyError instanceof Error ? anomalyError.message : ''}
-                </AlertDescription>
-              </Alert>
-            ) : (
+            ) : mlServiceOnline && anomalyData ? (
               <>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-lg border p-3 text-center">
@@ -497,6 +610,23 @@ export default function Dashboard() {
                   )}
                 </div>
               </>
+            ) : hotspotChartData.length > 0 ? (
+              <>
+                <div className="space-y-2">
+                  {hotspotChartData.map((hotspot, index) => (
+                    <div key={hotspot.name} className="rounded-lg border p-3">
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <p className="text-sm font-medium">{hotspot.name}</p>
+                        <p className="text-xs text-muted-foreground">{hotspot.emissions.toFixed(0)} tCO₂e</p>
+                      </div>
+                      <Progress value={index === 0 ? 100 : Math.max(20, 100 - index * 18)} className="h-2" />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Material hotspot ranking is shown because the ML anomaly service is unavailable.
+                </p>
+              </>
             )}
           </CardContent>
         </Card>
@@ -512,17 +642,10 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recsLoading && !mlRecsData ? (
+            {mlServiceOnline && recsLoading && !mlRecsData ? (
               <div className="flex h-64 items-center justify-center text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-            ) : recsError ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Unable to load recommendations. {recsError instanceof Error ? recsError.message : ''}
-                </AlertDescription>
-              </Alert>
             ) : recommendations.length > 0 ? (
               <>
                 <div className="rounded-lg border bg-green-50 p-3 dark:bg-green-950 dark:border-green-800">
@@ -530,6 +653,11 @@ export default function Dashboard() {
                     Total potential reduction: {totalPotentialReduction.toFixed(1)} tCO₂e
                   </p>
                 </div>
+                {!mlServiceOnline && (
+                  <p className="text-xs text-muted-foreground">
+                    Showing stored recommendations while the ML service is offline.
+                  </p>
+                )}
 
                 <div className="space-y-3 max-h-[34rem] overflow-y-auto pr-1">
                   {recommendations.map((recommendation) => (
