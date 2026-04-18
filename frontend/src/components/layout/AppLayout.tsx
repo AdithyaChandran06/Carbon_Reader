@@ -10,11 +10,13 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Map
+  Map,
+  Wrench
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { LiveAPIsModal } from '@/components/dashboard/LiveAPIsModal';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -27,6 +29,7 @@ const navigation = [
 
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [liveApisOpen, setLiveApisOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
 
@@ -94,6 +97,15 @@ export function AppLayout() {
         <header className="flex h-16 items-center justify-between border-b bg-card px-6">
           <h1 className="text-xl font-semibold text-foreground">{currentPage}</h1>
           <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setLiveApisOpen(true)}
+              className="gap-2"
+            >
+              <Wrench className="h-4 w-4" />
+              Tools
+            </Button>
             <div className="flex items-center gap-2 mr-4">
               <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-semibold border border-green-200">
                 {user?.name?.charAt(0) || <User className="h-4 w-4" />}
@@ -112,6 +124,9 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Live APIs Modal */}
+      <LiveAPIsModal open={liveApisOpen} onOpenChange={setLiveApisOpen} />
     </div>
   );
 }

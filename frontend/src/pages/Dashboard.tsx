@@ -1,6 +1,7 @@
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RecommendationCard } from '@/components/dashboard/RecommendationCard';
 import { WhatIfScenario } from '@/components/dashboard/WhatIfScenario';
+import { MLInsightsPanel } from '@/components/dashboard/MLInsightsPanel';
 import { useQuery } from '@tanstack/react-query';
 import { getSummaryMetrics, getRecommendations } from '@/services/api';
 import { Loader2, TrendingDown, TrendingUp, Target, Zap, AlertCircle } from 'lucide-react';
@@ -226,6 +227,9 @@ export default function Dashboard() {
           costSavings={totalCostSavings}
         />
       )}
+
+      {/* ML Insights */}
+      <MLInsightsPanel />
 
       {/* Impact Summary Card */}
       {recommendations.length > 0 && (
