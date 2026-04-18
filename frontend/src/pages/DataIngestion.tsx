@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import React from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Clock, Loader2, Database, FileSpreadsheet, Download, RefreshCw, Trash2, Globe } from 'lucide-react';
+import { Upload, FileText, Truck, Users, Link2, CheckCircle, AlertCircle, Clock, Loader2, Database, FileSpreadsheet, Download, RefreshCw, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUploadedFiles, uploadFile, clearDatabase } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import type { UploadedFile, FileStatus } from '@/types/carbon';
-import LiveAPIs from './LiveAPIs';
+import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -240,7 +240,7 @@ export default function DataIngestion() {
       </div>
 
       <Tabs defaultValue="upload" className="w-full">
-        <TabsList className="grid w-full max-w-3xl grid-cols-4">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="upload" className="gap-2">
             <Upload className="h-4 w-4" />
             File Upload
@@ -252,10 +252,6 @@ export default function DataIngestion() {
           <TabsTrigger value="templates" className="gap-2">
             <Download className="h-4 w-4" />
             Templates
-          </TabsTrigger>
-          <TabsTrigger value="apis" className="gap-2">
-            <Globe className="h-4 w-4" />
-            API Integrations
           </TabsTrigger>
         </TabsList>
 
@@ -566,10 +562,6 @@ export default function DataIngestion() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="apis" className="mt-6">
-          <LiveAPIs />
         </TabsContent>
 
       </Tabs>

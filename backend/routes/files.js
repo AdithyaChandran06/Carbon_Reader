@@ -3,12 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const UploadedFile = require("../models/UploadedFile");
-const EmissionData = require("../models/EmissionData");
-const Recommendation = require("../models/Recommendation");
 const { processCSVFile } = require("../utils/csvProcessor");
-
-const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://localhost:8001";
-const ML_TIMEOUT_MS = parseInt(process.env.ML_TIMEOUT_MS || "15000");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -77,8 +72,6 @@ async function processFileAsync(uploadedFile, filePath) {
         uploadedFile.sourceType,
         uploadedFile._id
       );
-
-      await refreshRecommendationsFromML();
       
       console.log(`✅ Processed ${emissionEntries.length} emission entries from ${uploadedFile.fileName}`);
       
@@ -96,80 +89,6 @@ async function processFileAsync(uploadedFile, filePath) {
     uploadedFile.status = "Error";
     uploadedFile.errorMessage = error.message;
     await uploadedFile.save();
-  }
-}
-
-async function refreshRecommendationsFromML() {
-  const records = await EmissionData.find().lean();
-
-  if (records.length === 0) {
-    await Recommendation.deleteMany({ isActive: true });
-    return;
-  }
-
-  const payload = {
-    records: records.map((r) => ({
-      id: r._id.toString(),
-      category: r.category,
-      subCategory: r.subCategory,
-      activityData: r.activityData,
-      unit: r.unit,
-      emissionFactor: r.emissionFactor,
-      region: r.region,
-      co2e: r.co2e,
-      supplier: r.supplier,
-      date: r.date ? r.date.toISOString() : null,
-    })),
-  };
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ML_TIMEOUT_MS);
-
-  try {
-    const mlResponse = await fetch(`${ML_SERVICE_URL}/recommendations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-
-    if (!mlResponse.ok) {
-      const text = await mlResponse.text();
-      throw new Error(`ML recommendation generation failed: ${mlResponse.status} ${text}`);
-    }
-
-    const result = await mlResponse.json();
-    const mlRecs = Array.isArray(result?.recommendations) ? result.recommendations : [];
-
-    const validTypes = new Set(["supplier", "transport", "material", "energy", "consolidation"]);
-    const validPriority = new Set(["High", "Medium", "Low"]);
-    const validDifficulty = new Set(["Low", "Medium", "High"]);
-
-    const mappedRecommendations = mlRecs.map((rec) => ({
-      title: rec.title || "ML Recommendation",
-      description: rec.description || "Automatically generated from uploaded data.",
-      type: validTypes.has(rec.type) ? rec.type : "energy",
-      currentEmissions: Number(rec.currentEmissions) || 0,
-      potentialReduction: Number(rec.potentialReduction) || 0,
-      percentageSavings: Number(rec.percentageSavings) || 0,
-      costImpact: Number(rec.costImpact) || 0,
-      implementationDifficulty: validDifficulty.has(rec.implementationDifficulty)
-        ? rec.implementationDifficulty
-        : "Medium",
-      priority: validPriority.has(rec.priority) ? rec.priority : "Medium",
-      isActive: true,
-    }));
-
-    await Recommendation.deleteMany({ isActive: true });
-    if (mappedRecommendations.length > 0) {
-      await Recommendation.insertMany(mappedRecommendations);
-    }
-
-    console.log(`🤖 Refreshed ${mappedRecommendations.length} ML recommendations`);
-  } catch (error) {
-    console.warn("⚠️ Unable to refresh ML recommendations after upload:", error.message);
-  } finally {
-    clearTimeout(timer);
   }
 }
 
