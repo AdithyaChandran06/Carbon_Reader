@@ -10,8 +10,6 @@ import CarbonCalculation from "./pages/CarbonCalculation";
 import HotspotAnalysis from "./pages/HotspotAnalysis";
 import AuditTrust from "./pages/AuditTrust";
 import NotFound from "./pages/NotFound";
-import MLInsights from "./pages/MLInsights";
-import LiveAPIs from "./pages/LiveAPIs";
 import RouteOptimization from "./pages/RouteOptimization";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -38,8 +36,6 @@ const App = () => (
             <Route path="/calculation" element={<CarbonCalculation />} />
             <Route path="/hotspots" element={<HotspotAnalysis />} />
             <Route path="/audit" element={<AuditTrust />} />
-            <Route path="/ml-insights" element={<MLInsights />} />
-              <Route path="/live-apis" element={<LiveAPIs />} />
               <Route path="/route-optimization" element={<RouteOptimization />} />
             </Route>
           </Route>

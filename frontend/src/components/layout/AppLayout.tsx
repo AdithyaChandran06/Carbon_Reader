@@ -9,10 +9,6 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
-  Leaf,
-  Leaf,
-  Brain,
-  Globe,
   LogOut,
   Map
 } from 'lucide-react';
@@ -26,8 +22,6 @@ const navigation = [
   { name: 'Carbon Calculation', href: '/calculation', icon: Calculator },
   { name: 'Hotspot Analysis', href: '/hotspots', icon: Target },
   { name: 'Audit & Trust', href: '/audit', icon: Shield },
-  { name: 'ML Insights', href: '/ml-insights', icon: Brain },
-  { name: 'Live APIs', href: '/live-apis', icon: Globe },
   { name: 'Route Optimization', href: '/route-optimization', icon: Map },
 ];
 

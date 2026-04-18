@@ -61,7 +61,7 @@ export interface Recommendation {
   percentageSavings: number;
   costImpact: number;
   implementationDifficulty: 'Low' | 'Medium' | 'High';
-  priority: number;
+  priority: 'High' | 'Medium' | 'Low';
 }
 
 export interface WhatIfScenario {

@@ -13,11 +13,13 @@ export default function Dashboard() {
   const { data: metrics, isLoading: metricsLoading, error: metricsError } = useQuery({
     queryKey: ['summaryMetrics'],
     queryFn: getSummaryMetrics,
+    refetchInterval: 5000,
   });
 
   const { data: recommendations = [], isLoading: recsLoading } = useQuery({
     queryKey: ['recommendations'],
     queryFn: getRecommendations,
+    refetchInterval: 5000,
   });
 
   if (metricsLoading || recsLoading) {
