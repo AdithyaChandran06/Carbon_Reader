@@ -147,6 +147,15 @@ export async function getCategoryBreakdown(): Promise<Array<{
   return apiCall('/analytics/category-breakdown');
 }
 
+export async function getMLHealth(): Promise<{
+  mlService: { status: string };
+  nodeProxy: string;
+  error?: string;
+  hint?: string;
+}> {
+  return apiCall('/ml/health');
+}
+
 export async function getSupplierAnalysis(): Promise<Supplier[]> {
   return apiCall<Supplier[]>('/analytics/suppliers');
 }

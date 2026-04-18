@@ -28,17 +28,133 @@ export default function Dashboard() {
       <div className="flex items-center justify-center h-96">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    );
-  }
 
-  if (metricsError || !metrics) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center space-y-4">
+    import { getMLHealth, getSummaryMetrics } from '@/services/api';
+    import {
+      AreaChart,
+      Area,
+      BarChart,
+      Bar,
+      CartesianGrid,
+      Cell,
+      Legend,
+      ResponsiveContainer,
+      Tooltip,
+      XAxis,
+      YAxis,
+    } from 'recharts';
+    import {
+      AlertCircle,
+      Activity,
+      BarChart3,
+      Brain,
+      Loader2,
+      LineChart as LineChartIcon,
+      TrendingDown,
+      TrendingUp,
+      TriangleAlert,
+    } from 'lucide-react';
           <div className="flex justify-center">
             <div className="rounded-full bg-muted p-4">
               <AlertCircle className="h-12 w-12 text-muted-foreground" />
             </div>
+    import { MetricCard } from '@/components/dashboard/MetricCard';
+
+    const API_BASE = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`
+      : 'https://carbon-reader.onrender.com/api';
+
+    async function apiPost<T>(endpoint: string, body?: object): Promise<T> {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      if (!res.ok) {
+        const message = await res.text();
+        throw new Error(message || `API error: ${res.status}`);
+      }
+
+      return res.json();
+    }
+
+    interface ForecastPoint {
+      period: string;
+      predictedCo2e?: number;
+      co2e?: number;
+      lower?: number;
+      upper?: number;
+    }
+
+    interface ForecastResult {
+      historical: ForecastPoint[];
+      forecast: ForecastPoint[];
+      category: string;
+      monthsAhead: number;
+    }
+
+    interface AnomalyRecord {
+      id: string;
+      category: string;
+      subCategory: string;
+      co2e: number;
+      isAnomaly: boolean;
+      anomalyScore: number;
+      severity: 'high' | 'medium' | 'normal';
+    }
+
+    interface AnomalyResult {
+      results: AnomalyRecord[];
+      summary: { total: number; anomalies: number; normalRecords: number };
+    }
+
+    interface ClusterSummary {
+      clusterId: number;
+      label: string;
+      recordCount: number;
+      totalCo2e: number;
+      avgEmissionFactor: number;
+      dominantCategories: string[];
+    }
+
+    interface ClusterResult {
+      clusters: ClusterSummary[];
+    }
+
+    interface MLRecommendation {
+      rank: number;
+      title: string;
+      description: string;
+      type: string;
+      currentEmissions: number;
+      potentialReduction: number;
+      percentageSavings: number;
+      costImpact: number;
+      implementationDifficulty: 'Low' | 'Medium' | 'High';
+      priority: 'High' | 'Medium' | 'Low';
+      mlConfidence: number;
+    }
+
+    interface MLRecsResult {
+      recommendations: MLRecommendation[];
+      totalPotentialReduction: number;
+    }
+
+    const PRIORITY_VARIANT: Record<string, 'default' | 'destructive' | 'secondary' | 'outline'> = {
+      High: 'destructive',
+      Medium: 'outline',
+      Low: 'secondary',
+    };
+
+    const DIFFICULTY_COLOR: Record<string, string> = {
+      Low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      Medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+      High: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    };
+
+    const CLUSTER_COLORS = ['#1D9E75', '#378ADD', '#BA7517', '#D85A30'];
           </div>
           <div>
             <p className="text-lg font-semibold text-foreground mb-2">No Data Available Yet</p>
@@ -47,13 +163,41 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-      </div>
-    );
-  }
+      const { data: apiHealth } = useQuery({
+        queryKey: ['apiHealth'],
+        queryFn: getMLHealth,
+        refetchInterval: 15000,
+      });
 
+      const { data: forecastData, error: forecastError, isLoading: forecastLoading } = useQuery<ForecastResult>({
+        queryKey: ['mlForecast'],
+        queryFn: () => apiPost<ForecastResult>('/ml/forecast', { months_ahead: 6 }),
+        enabled: !!metrics,
+        refetchInterval: 30000,
+      });
+
+      const { data: anomalyData, error: anomalyError, isLoading: anomalyLoading } = useQuery<AnomalyResult>({
+        queryKey: ['mlAnomalies'],
+        queryFn: () => apiPost<AnomalyResult>('/ml/anomalies', { contamination: 0.1 }),
+        enabled: !!metrics,
+        refetchInterval: 30000,
+      });
+
+      const { data: clusterData, error: clusterError, isLoading: clusterLoading } = useQuery<ClusterResult>({
+        queryKey: ['mlClusters'],
+        queryFn: () => apiPost<ClusterResult>('/ml/cluster', { n_clusters: 4 }),
+        enabled: !!metrics,
+        refetchInterval: 30000,
+      });
+
+      const { data: mlRecsData, error: recsError, isLoading: recsLoading } = useQuery<MLRecsResult>({
+        queryKey: ['mlRecommendations'],
+        queryFn: () => apiPost<MLRecsResult>('/ml/recommendations'),
+        enabled: !!metrics,
+        refetchInterval: 30000,
   const highPriorityRecs = recommendations.filter(r => r.priority === 'High');
   const mediumPriorityRecs = recommendations.filter(r => r.priority === 'Medium');
-  const lowPriorityRecs = recommendations.filter(r => r.priority === 'Low');
+      if (metricsLoading && !metrics) {
   const totalPotentialReduction = recommendations.reduce((sum, r) => sum + r.potentialReduction, 0);
   const totalCostSavings = recommendations.reduce((sum, r) => sum + Math.abs(r.costImpact), 0);
 
@@ -61,34 +205,36 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Overview Banner */}
       <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-        <CardContent className="py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                Carbon Accounting Dashboard
-              </h2>
-              <p className="text-muted-foreground">
-                Track, analyze, and reduce your organization's carbon footprint
-              </p>
-            </div>
-            <div className="hidden lg:flex items-center gap-4">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{recommendations.length}</p>
-                <p className="text-xs text-muted-foreground">Active Recommendations</p>
-              </div>
-              <div className="w-px h-12 bg-border" />
-              <div className="text-center">
-                <p className="text-3xl font-bold text-green-600">{totalPotentialReduction.toFixed(0)}</p>
-                <p className="text-xs text-muted-foreground">tCO₂e Potential Reduction</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
+      const recommendations = mlRecsData?.recommendations ?? [];
+      const totalPotentialReduction = mlRecsData?.totalPotentialReduction ?? recommendations.reduce((sum, r) => sum + r.potentialReduction, 0);
+      const totalCostSavings = recommendations.reduce((sum, r) => sum + Math.abs(r.costImpact), 0);
+      const recommendationCount = recommendations.length;
+      const apiConnected = apiHealth?.nodeProxy === 'ok';
+      const forecastChartData = [
+        ...(forecastData?.historical ?? []).map((point) => ({
+          period: point.period,
+          historical: point.co2e,
+        })),
+        ...(forecastData?.forecast ?? []).map((point) => ({
+          period: point.period,
+          forecast: point.predictedCo2e,
+          lower: point.lower,
+          upper: point.upper,
+        })),
+      ];
+      const anomalyRows = anomalyData?.results?.filter((record) => record.isAnomaly).sort((a, b) => a.anomalyScore - b.anomalyScore) ?? [];
       {/* Summary Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
+          {metricsError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                We could not load the summary metrics. {metricsError instanceof Error ? metricsError.message : 'Please try again.'}
+              </AlertDescription>
+            </Alert>
+          )}
+
           title="Total Scope 3 Emissions"
           value={metrics.totalEmissions}
           unit="tCO₂e"
@@ -98,115 +244,366 @@ export default function Dashboard() {
           title={`Top Hotspot: ${metrics.topHotspot || 'None'}`}
           value={metrics.topHotspotEmissions}
           unit="tCO₂e"
-          variant="yellow"
+                    Track, analyze, and reduce your organization's carbon footprint with ML-driven outputs from the current data.
         />
         <MetricCard
-          title="Potential Reduction Identified"
+                <div className="hidden lg:flex items-center gap-6">
           value={metrics.potentialReduction}
-          unit="tCO₂e"
-          variant="blue"
+                    <p className="text-3xl font-bold text-primary">{recommendationCount}</p>
+                    <p className="text-xs text-muted-foreground">Recommendations</p>
         />
         <MetricCard
           title="Improvement Suggestions"
           value={metrics.improvementSuggestions}
-          unit="Opportunities"
+                    <p className="text-xs text-muted-foreground">Total CO₂ Reduced</p>
+                  </div>
+                  <div className="w-px h-12 bg-border" />
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">{apiConnected ? 'On' : 'Off'}</p>
+                    <p className="text-xs text-muted-foreground">API Connected</p>
           variant="teal"
         />
       </div>
 
       {/* Recommendations Summary Stats */}
       {recommendations.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-red-500" />
+              value={metrics?.totalEmissions ?? 0}
                 High Priority
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <p className="text-3xl font-bold">{highPriorityRecs.length}</p>
+              title={`Top Hotspot: ${metrics?.topHotspot || 'None'}`}
+              value={metrics?.topHotspotEmissions ?? 0}
                 <Badge variant="destructive">Urgent</Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
                 {highPriorityRecs.reduce((sum, r) => sum + r.potentialReduction, 0).toFixed(0)} tCO₂e reduction
               </p>
-            </CardContent>
+              value={metrics?.potentialReduction ?? 0}
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                Medium Priority
+              value={metrics?.improvementSuggestions ?? 0}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <p className="text-3xl font-bold">{mediumPriorityRecs.length}</p>
-                <Badge variant="outline" className="border-yellow-500 text-yellow-600">Important</Badge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-primary" />
+                  AI Recommendations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold">{recommendationCount}</p>
+                  <Badge variant={recommendationCount > 0 ? 'default' : 'secondary'}>
+                    {recommendationCount > 0 ? 'Live' : 'Waiting'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Generated from the current data snapshot
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4 text-green-600" />
+                  Total CO₂ Reduced
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold text-green-600">{totalPotentialReduction.toFixed(0)}</p>
+                  <Badge variant="secondary">tCO₂e</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Model output for the latest recommendation set
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TriangleAlert className="h-4 w-4 text-yellow-600" />
+                  Anomalies Flagged
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold">{anomalyData?.summary.anomalies ?? 0}</p>
+                  <Badge variant={apiConnected ? 'outline' : 'destructive'}>{apiConnected ? 'Connected' : 'Offline'}</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {anomalyData?.summary.total ?? 0} records scanned
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LineChartIcon className="h-5 w-5 text-primary" />
+                  Emissions Forecast
+                </CardTitle>
+                <CardDescription>
+                  ML forecast built from the current input data.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {forecastLoading && !forecastData ? (
+                  <div className="flex h-72 items-center justify-center text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : forecastError ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Unable to load forecast data. {forecastError instanceof Error ? forecastError.message : ''}
+                    </AlertDescription>
+                  </Alert>
+                ) : forecastChartData.length > 0 ? (
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={forecastChartData} margin={{ top: 8, right: 20, bottom: 0, left: 0 }}>
+                        <defs>
+                          <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#1D9E75" stopOpacity={0.28} />
+                            <stop offset="95%" stopColor="#1D9E75" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="foreGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#378ADD" stopOpacity={0.28} />
+                            <stop offset="95%" stopColor="#378ADD" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip formatter={(value: number) => [`${value?.toFixed(1)} tCO₂e`, '']} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+                        <Legend />
+                        <Area type="monotone" dataKey="historical" stroke="#1D9E75" fill="url(#histGrad)" name="Historical" strokeWidth={2} dot={false} />
+                        <Area type="monotone" dataKey="forecast" stroke="#378ADD" fill="url(#foreGrad)" name="Forecast" strokeWidth={2} strokeDasharray="6 3" dot={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <p className="py-10 text-center text-sm text-muted-foreground">No forecast data available yet.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                  Emission Clusters
+                </CardTitle>
+                <CardDescription>
+                  Grouped source segments from the current dataset.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {clusterLoading && !clusterData ? (
+                  <div className="flex h-72 items-center justify-center text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : clusterError ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Unable to load clusters. {clusterError instanceof Error ? clusterError.message : ''}
+                    </AlertDescription>
+                  </Alert>
+                ) : clusterData?.clusters?.length ? (
+                  <>
+                    <div className="h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={clusterData.clusters}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip formatter={(value: number) => [`${value?.toFixed(1)} tCO₂e`, 'Total']} />
+                          <Bar dataKey="totalCo2e" name="Total CO₂e">
+                            {clusterData.clusters.map((_, index) => (
+                              <Cell key={index} fill={CLUSTER_COLORS[index % CLUSTER_COLORS.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {clusterData.clusters.map((cluster, index) => (
+                        <div key={cluster.clusterId} className="rounded-lg border p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="h-3 w-3 rounded-full" style={{ background: CLUSTER_COLORS[index % CLUSTER_COLORS.length] }} />
+                            <p className="text-sm font-semibold">{cluster.label}</p>
+                          </div>
+                          <div className="space-y-1 text-xs text-muted-foreground">
+                            <p>{cluster.recordCount} records</p>
+                            <p>{cluster.totalCo2e.toFixed(1)} tCO₂e total</p>
+                            <p>Avg factor {cluster.avgEmissionFactor.toFixed(4)}</p>
+                            <p>Top: {cluster.dominantCategories.join(', ')}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="py-10 text-center text-sm text-muted-foreground">No clusters available yet.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  Anomaly Detection
+                </CardTitle>
+                <CardDescription>
+                  Records that deviate from the model's normal pattern.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {anomalyLoading && !anomalyData ? (
+                  <div className="flex h-64 items-center justify-center text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : anomalyError ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Unable to load anomaly detection. {anomalyError instanceof Error ? anomalyError.message : ''}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="rounded-lg border p-3 text-center">
+                        <p className="text-2xl font-bold">{anomalyData?.summary.total ?? 0}</p>
+                        <p className="text-xs text-muted-foreground">Total records</p>
+                      </div>
+                      <div className="rounded-lg border border-red-200 bg-red-50 text-center p-3 dark:bg-red-950">
+                        <p className="text-2xl font-bold text-red-600">{anomalyData?.summary.anomalies ?? 0}</p>
+                        <p className="text-xs text-muted-foreground">Anomalies</p>
+                      </div>
+                      <div className="rounded-lg border border-green-200 bg-green-50 text-center p-3 dark:bg-green-950">
+                        <p className="text-2xl font-bold text-green-600">{anomalyData?.summary.normalRecords ?? 0}</p>
+                        <p className="text-xs text-muted-foreground">Normal</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                      {anomalyRows.length > 0 ? anomalyRows.map((record) => (
+                        <div key={record.id} className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-3 dark:bg-red-950">
+                          <div>
+                            <p className="text-sm font-medium">{record.category} — {record.subCategory}</p>
+                            <p className="text-xs text-muted-foreground">Score: {record.anomalyScore.toFixed(3)}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold">{record.co2e?.toFixed(2)} tCO₂e</p>
+                            <Badge variant="destructive" className="text-xs">{record.severity}</Badge>
+                          </div>
+                        </div>
+                      )) : (
+                        <p className="py-6 text-center text-sm text-muted-foreground">No anomalies detected yet.</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-primary" />
+                  AI Recommendations
+                </CardTitle>
+                <CardDescription>
+                  Ranked actions derived from the current data and model inference.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recsLoading && !mlRecsData ? (
+                  <div className="flex h-64 items-center justify-center text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : recsError ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Unable to load recommendations. {recsError instanceof Error ? recsError.message : ''}
+                    </AlertDescription>
+                  </Alert>
+                ) : recommendations.length > 0 ? (
+                  <>
+                    <div className="rounded-lg border bg-green-50 p-3 dark:bg-green-950 dark:border-green-800">
+                      <p className="text-sm font-semibold text-green-800 dark:text-green-200">
+                        Total potential reduction: {totalPotentialReduction.toFixed(1)} tCO₂e
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 max-h-[34rem] overflow-y-auto pr-1">
+                      {recommendations.map((recommendation) => (
+                        <div key={recommendation.rank} className="rounded-lg border p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="mb-1 flex items-center gap-2">
+                                <span className="text-xs font-mono text-muted-foreground">#{recommendation.rank}</span>
+                                <Badge variant={PRIORITY_VARIANT[recommendation.priority]}>{recommendation.priority}</Badge>
+                                <Badge variant="secondary" className="text-xs">{recommendation.type}</Badge>
+                              </div>
+                              <p className="mb-1 text-sm font-semibold">{recommendation.title}</p>
+                              <p className="text-xs text-muted-foreground">{recommendation.description}</p>
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <p className="text-lg font-bold text-green-600">-{recommendation.potentialReduction.toFixed(1)}</p>
+                              <p className="text-xs text-muted-foreground">tCO₂e</p>
+                              <p className="mt-1 text-xs">
+                                <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${DIFFICULTY_COLOR[recommendation.implementationDifficulty]}`}>
+                                  {recommendation.implementationDifficulty}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                            <span>ML confidence: {(recommendation.mlConfidence * 100).toFixed(0)}%</span>
+                            <span>Cost impact: {recommendation.costImpact > 0 ? '+' : ''}${recommendation.costImpact.toLocaleString()}</span>
+                            <span>{recommendation.percentageSavings}% saving</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="py-6 text-center text-sm text-muted-foreground">No recommendations available yet.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
                 {mediumPriorityRecs.reduce((sum, r) => sum + r.potentialReduction, 0).toFixed(0)} tCO₂e reduction
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
-                Low Priority
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <p className="text-3xl font-bold">{lowPriorityRecs.length}</p>
-                <Badge variant="secondary">Consider</Badge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {lowPriorityRecs.reduce((sum, r) => sum + r.potentialReduction, 0).toFixed(0)} tCO₂e reduction
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* High Priority Recommendations */}
-      {highPriorityRecs.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <h3 className="text-lg font-semibold">High Priority Recommendations</h3>
-            <Badge variant="destructive">{highPriorityRecs.length}</Badge>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {highPriorityRecs.map((rec) => (
-              <RecommendationCard key={rec.id} recommendation={rec} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Medium Priority Recommendations */}
-      {mediumPriorityRecs.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Target className="h-5 w-5 text-yellow-500" />
-            <h3 className="text-lg font-semibold">Medium Priority Recommendations</h3>
-            <Badge variant="outline" className="border-yellow-500 text-yellow-600">{mediumPriorityRecs.length}</Badge>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {mediumPriorityRecs.map((rec) => (
-              <RecommendationCard key={rec.id} recommendation={rec} />
+          {recommendations.length > 0 && metrics && (
             ))}
-          </div>
+              currentEmissions={metrics.totalEmissions}
         </div>
       )}
 
       {/* Low Priority Recommendations */}
-      {lowPriorityRecs.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
             <Zap className="h-5 w-5 text-blue-500" />
             <h3 className="text-lg font-semibold">Low Priority Recommendations</h3>
             <Badge variant="secondary">{lowPriorityRecs.length}</Badge>
@@ -253,11 +650,11 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">tCO₂e reduction</p>
                 </div>
                 <Progress 
-                  value={(totalPotentialReduction / metrics.totalEmissions) * 100} 
+                  value={metrics?.totalEmissions ? (totalPotentialReduction / metrics.totalEmissions) * 100 : 0} 
                   className="h-2"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  {((totalPotentialReduction / metrics.totalEmissions) * 100).toFixed(1)}% of total emissions
+                  {metrics?.totalEmissions ? ((totalPotentialReduction / metrics.totalEmissions) * 100).toFixed(1) : '0.0'}% of total emissions
                 </p>
               </div>
               <div>
