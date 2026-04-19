@@ -21,7 +21,7 @@ import { getApiStatus } from '@/services/api';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Data Ops Hub', href: '/data-ops', icon: Upload },
+  { name: 'Scope 3 Intake', href: '/scope3-intake', icon: Upload },
   { name: 'Hotspot Analysis', href: '/hotspots', icon: Target },
   { name: 'Audit & Trust', href: '/audit', icon: Shield },
   // Removed: Route Optimization (not essential for Scope 3 compliance)

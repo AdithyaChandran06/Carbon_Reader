@@ -124,7 +124,7 @@ export default function DataIngestion() {
 
   return (
     <div className="space-y-6">
-      {/* Data Ops Banner */}
+      {/* Scope 3 Intake Banner */}
       <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
         <CardContent className="py-6">
           <div className="flex items-center justify-between">
@@ -134,10 +134,10 @@ export default function DataIngestion() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-1">
-                  Data Ops Hub
+                  Scope 3 Intake Workspace
                 </h2>
                 <p className="text-muted-foreground">
-                  Ingest, validate, and manage emissions data across all sources
+                  Upload, validate, and track Scope 3 supplier and logistics data in one place
                 </p>
               </div>
             </div>
@@ -262,10 +262,10 @@ export default function DataIngestion() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Upload className="h-5 w-5" />
-                  Ingest Emission Data Files
+                  Upload Scope 3 Data Files
                 </CardTitle>
                 <CardDescription>
-                  Upload CSV files containing material, transport, or energy emission data
+                  Upload CSV files containing purchased goods, transport, or energy-related Scope 3 activity data
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -325,7 +325,7 @@ export default function DataIngestion() {
               <CardHeader>
                 <CardTitle className="text-lg">File Naming Guidelines</CardTitle>
                 <CardDescription>
-                  Name your files correctly for automatic categorization
+                  Use clear names so files are auto-mapped to Scope 3 activity types
                 </CardDescription>
               </CardHeader>
               <CardContent>

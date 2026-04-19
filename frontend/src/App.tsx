@@ -30,8 +30,9 @@ const App = () => (
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/data-ops" element={<DataIngestion />} />
-            <Route path="/data-ingestion" element={<Navigate to="/data-ops" replace />} />
+            <Route path="/scope3-intake" element={<DataIngestion />} />
+            <Route path="/data-ops" element={<Navigate to="/scope3-intake" replace />} />
+            <Route path="/data-ingestion" element={<Navigate to="/scope3-intake" replace />} />
             <Route path="/calculation" element={<Navigate to="/hotspots" replace />} />
             <Route path="/hotspots" element={<HotspotAnalysis />} />
             <Route path="/audit" element={<AuditTrust />} />
