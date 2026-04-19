@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { 
   LayoutDashboard, 
   Upload, 
-  Calculator, 
   Target, 
   Shield,
   User,
@@ -23,8 +22,7 @@ import { getApiStatus } from '@/services/api';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Data Ingestion', href: '/data-ingestion', icon: Upload },
-  { name: 'Carbon Calculation', href: '/calculation', icon: Calculator },
+  { name: 'Data Ops Hub', href: '/data-ops', icon: Upload },
   { name: 'Hotspot Analysis', href: '/hotspots', icon: Target },
   { name: 'Audit & Trust', href: '/audit', icon: Shield },
   { name: 'Route Optimization', href: '/route-optimization', icon: Map },

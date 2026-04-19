@@ -124,7 +124,7 @@ export default function DataIngestion() {
 
   return (
     <div className="space-y-6">
-      {/* Data Ingestion Banner */}
+      {/* Data Ops Banner */}
       <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
         <CardContent className="py-6">
           <div className="flex items-center justify-between">
@@ -134,10 +134,10 @@ export default function DataIngestion() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-1">
-                  Data Ingestion Hub
+                  Data Ops Hub
                 </h2>
                 <p className="text-muted-foreground">
-                  Upload and manage emission data from multiple sources
+                  Ingest, validate, and manage emissions data across all sources
                 </p>
               </div>
             </div>
@@ -262,7 +262,7 @@ export default function DataIngestion() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Upload className="h-5 w-5" />
-                  Upload Emission Data Files
+                  Ingest Emission Data Files
                 </CardTitle>
                 <CardDescription>
                   Upload CSV files containing material, transport, or energy emission data

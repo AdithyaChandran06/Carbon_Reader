@@ -17,6 +17,14 @@
 const express = require("express");
 const router = express.Router();
 const EmissionData = require("../models/EmissionData");
+const {
+  fallbackPredict,
+  fallbackAnomalies,
+  fallbackCluster,
+  fallbackForecast,
+  fallbackRecommendations,
+  fallbackConfidence,
+} = require("../utils/mlLocalEngine");
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://localhost:8001";
 const ML_TIMEOUT_MS = parseInt(process.env.ML_TIMEOUT_MS || "15000");
@@ -42,6 +50,15 @@ async function proxyToML(path, body, timeoutMs = ML_TIMEOUT_MS) {
     return await res.json();
   } finally {
     clearTimeout(timer);
+  }
+}
+
+async function tryExternalML(path, body, timeoutMs = ML_TIMEOUT_MS) {
+  try {
+    const result = await proxyToML(path, body, timeoutMs);
+    return { data: result, engine: "external" };
+  } catch (error) {
+    return { error };
   }
 }
 
@@ -72,14 +89,23 @@ router.get("/health", async (req, res) => {
     const mlRes = await fetch(`${ML_SERVICE_URL}/health`, {
       signal: AbortSignal.timeout(3000),
     });
+    if (!mlRes.ok) {
+      throw new Error(`ML service health check failed: ${mlRes.status}`);
+    }
     const data = await mlRes.json();
-    res.json({ mlService: data, nodeProxy: "ok" });
+    res.json({ mlService: { ...data, mode: "external" }, nodeProxy: "ok" });
   } catch (err) {
-    res.status(503).json({
-      mlService: "unreachable",
+    res.json({
+      mlService: {
+        status: "ok",
+        service: "local-ml-fallback",
+        mode: "local",
+      },
       nodeProxy: "ok",
-      error: err.message,
-      hint: "Start the ML service: cd ml_service && uvicorn main:app --port 8001",
+      externalService: {
+        status: "unreachable",
+        error: err.message,
+      },
     });
   }
 });
@@ -94,8 +120,14 @@ router.post("/predict", async (req, res) => {
     if (records.length === 0) {
       return res.json({ predictions: [], message: "No records found" });
     }
-    const result = await proxyToML("/predict/emissions", { records });
-    res.json(result);
+    const external = await tryExternalML("/predict/emissions", { records });
+    if (external.data) return res.json(external.data);
+
+    res.json({
+      ...fallbackPredict(records),
+      engine: "local",
+      fallbackReason: external.error?.message,
+    });
   } catch (err) {
     console.error("ML predict error:", err.message);
     res.status(500).json({ error: err.message });
@@ -115,11 +147,19 @@ router.post("/anomalies", async (req, res) => {
         message: "Need at least 4 records for anomaly detection",
       });
     }
-    const result = await proxyToML("/anomalies", {
+    const payload = {
       records,
       contamination: req.body?.contamination || 0.1,
+    };
+
+    const external = await tryExternalML("/anomalies", payload);
+    if (external.data) return res.json(external.data);
+
+    res.json({
+      ...fallbackAnomalies(records, payload.contamination),
+      engine: "local",
+      fallbackReason: external.error?.message,
     });
-    res.json(result);
   } catch (err) {
     console.error("ML anomalies error:", err.message);
     res.status(500).json({ error: err.message });
@@ -136,11 +176,19 @@ router.post("/cluster", async (req, res) => {
     if (records.length < 2) {
       return res.json({ clusters: [], message: "Need at least 2 records to cluster" });
     }
-    const result = await proxyToML("/cluster", {
+    const payload = {
       records,
       n_clusters: req.body?.n_clusters || 4,
+    };
+
+    const external = await tryExternalML("/cluster", payload);
+    if (external.data) return res.json(external.data);
+
+    res.json({
+      ...fallbackCluster(records, payload.n_clusters),
+      engine: "local",
+      fallbackReason: external.error?.message,
     });
-    res.json(result);
   } catch (err) {
     console.error("ML cluster error:", err.message);
     res.status(500).json({ error: err.message });
@@ -154,12 +202,20 @@ router.post("/cluster", async (req, res) => {
 router.post("/forecast", async (req, res) => {
   try {
     const records = await loadRecordsForML(req.body?.filters || {});
-    const result = await proxyToML("/forecast", {
+    const payload = {
       records,
       months_ahead: req.body?.months_ahead || 6,
       category: req.body?.category || null,
+    };
+
+    const external = await tryExternalML("/forecast", payload);
+    if (external.data) return res.json(external.data);
+
+    res.json({
+      ...fallbackForecast(records, payload.months_ahead, payload.category),
+      engine: "local",
+      fallbackReason: external.error?.message,
     });
-    res.json(result);
   } catch (err) {
     console.error("ML forecast error:", err.message);
     res.status(500).json({ error: err.message });
@@ -176,7 +232,8 @@ router.post("/recommendations", async (req, res) => {
     if (records.length === 0) {
       return res.json({ recommendations: [] });
     }
-    const result = await proxyToML("/recommendations", { records });
+    const external = await tryExternalML("/recommendations", { records });
+    const result = external.data || fallbackRecommendations(records);
 
     // Optionally save generated recommendations to MongoDB
     const Recommendation = require("../models/Recommendation");
@@ -186,7 +243,11 @@ router.post("/recommendations", async (req, res) => {
       await Recommendation.insertMany(docs);
     }
 
-    res.json(result);
+    res.json({
+      ...result,
+      engine: external.data ? "external" : "local",
+      fallbackReason: external.error?.message,
+    });
   } catch (err) {
     console.error("ML recommendations error:", err.message);
     res.status(500).json({ error: err.message });
@@ -203,7 +264,8 @@ router.post("/confidence", async (req, res) => {
     if (records.length === 0) {
       return res.json({ results: [], message: "No records" });
     }
-    const result = await proxyToML("/confidence", { records });
+    const external = await tryExternalML("/confidence", { records });
+    const result = external.data || fallbackConfidence(records);
 
     // Optionally update confidence ratings in DB
     if (req.body?.updateDB && result.results?.length > 0) {
@@ -215,7 +277,11 @@ router.post("/confidence", async (req, res) => {
       await Promise.all(updates);
     }
 
-    res.json(result);
+    res.json({
+      ...result,
+      engine: external.data ? "external" : "local",
+      fallbackReason: external.error?.message,
+    });
   } catch (err) {
     console.error("ML confidence error:", err.message);
     res.status(500).json({ error: err.message });
