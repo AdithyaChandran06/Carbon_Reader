@@ -77,7 +77,7 @@ export default function Login() {
             </div>
             <div className="flex items-center gap-3 rounded-lg bg-white/5 p-4 ring-1 ring-white/10 backdrop-blur-sm">
                 <div className="p-2 rounded-md bg-teal-500/20 text-teal-400"><Globe size={20} /></div>
-                <div className="text-sm font-medium">Scope 1, 2 & 3</div>
+                <div className="text-sm font-medium">Scope 3</div>
             </div>
           </div>
         </div>

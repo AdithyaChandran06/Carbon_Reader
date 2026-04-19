@@ -66,8 +66,9 @@ const dataLineageRoutes    = require("./routes/dataLineage");
 const systemRoutes         = require("./routes/system");
 const authRoutes           = require("./routes/auth");
 
-// NEW: Live emission factor APIs
-const liveFactorRoutes     = require("./routes/liveFactors");
+// NEW: Scope 3 GHG Protocol compliance APIs
+const scope3CategoriesRoutes = require("./routes/scope3Categories");
+const scope3ComplianceRoutes = require("./routes/scope3Compliance");
 
 // Health check
 app.get("/api", (req, res) => {
@@ -82,7 +83,8 @@ app.get("/api", (req, res) => {
       dataLineage:    "/api/data-lineage",
       system:         "/api/system",
       auth:           "/api/auth",
-      liveFactors:    "/api/live-factors",
+      scope3Categories: "/api/scope3-categories",
+      scope3Compliance: "/api/scope3-compliance",
     },
   });
 });
@@ -93,9 +95,10 @@ app.use("/api/emission-factors", emissionFactorRoutes);
 app.use("/api/analytics",        analyticsRoutes);
 app.use("/api/recommendations",  recommendationRoutes);
 app.use("/api/data-lineage",     dataLineageRoutes);
-app.use("/api/system",           systemRoutes);
-app.use("/api/auth",             authRoutes);
-app.use("/api/live-factors",     liveFactorRoutes);
+app.use("/api/system",              systemRoutes);
+app.use("/api/auth",                authRoutes);
+app.use("/api/scope3-categories",   scope3CategoriesRoutes);
+app.use("/api/scope3-compliance",   scope3ComplianceRoutes);
 
 // Serve frontend
 const frontendDist = path.join(__dirname, "../frontend/dist");
