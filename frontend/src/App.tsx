@@ -9,9 +9,6 @@ import DataIngestion from "./pages/DataIngestion";
 import HotspotAnalysis from "./pages/HotspotAnalysis";
 import AuditTrust from "./pages/AuditTrust";
 import NotFound from "./pages/NotFound";
-import MLInsights from "./pages/MLInsights";
-import LiveAPIs from "./pages/LiveAPIs";
-import RouteOptimization from "./pages/RouteOptimization";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { AuthProvider } from "@/context/AuthContext";
@@ -38,9 +35,8 @@ const App = () => (
             <Route path="/calculation" element={<Navigate to="/hotspots" replace />} />
             <Route path="/hotspots" element={<HotspotAnalysis />} />
             <Route path="/audit" element={<AuditTrust />} />
-            <Route path="/ml-insights" element={<MLInsights />} />
-              <Route path="/live-apis" element={<LiveAPIs />} />
-              <Route path="/route-optimization" element={<RouteOptimization />} />
+              {/* ML Insights and Live APIs consolidated into Dashboard */}
+              {/* Removed: /ml-insights, /live-apis, /route-optimization */}
             </Route>
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

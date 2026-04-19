@@ -66,8 +66,6 @@ const dataLineageRoutes    = require("./routes/dataLineage");
 const systemRoutes         = require("./routes/system");
 const authRoutes           = require("./routes/auth");
 
-// NEW: ML microservice proxy
-const mlRoutes             = require("./routes/ml");
 // NEW: Live emission factor APIs
 const liveFactorRoutes     = require("./routes/liveFactors");
 
@@ -84,8 +82,7 @@ app.get("/api", (req, res) => {
       dataLineage:    "/api/data-lineage",
       system:         "/api/system",
       auth:           "/api/auth",
-      ml:             "/api/ml",             // NEW
-      liveFactors:    "/api/live-factors",   // NEW
+      liveFactors:    "/api/live-factors",
     },
   });
 });
@@ -98,8 +95,7 @@ app.use("/api/recommendations",  recommendationRoutes);
 app.use("/api/data-lineage",     dataLineageRoutes);
 app.use("/api/system",           systemRoutes);
 app.use("/api/auth",             authRoutes);
-app.use("/api/ml",               mlRoutes);          // NEW
-app.use("/api/live-factors",     liveFactorRoutes);  // NEW
+app.use("/api/live-factors",     liveFactorRoutes);
 
 // Serve frontend
 const frontendDist = path.join(__dirname, "../frontend/dist");
@@ -114,5 +110,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 API at http://localhost:${PORT}/api`);
-  console.log(`🤖 ML service expected at ${process.env.ML_SERVICE_URL || "http://localhost:8001"}`);
+  console.log(`📈 Integrated ML engine active for recommendations, forecasts, and anomaly detection`);
 });

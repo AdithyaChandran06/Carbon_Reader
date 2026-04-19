@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Map,
   Activity,
   WifiOff
 } from 'lucide-react';
@@ -25,7 +24,8 @@ const navigation = [
   { name: 'Data Ops Hub', href: '/data-ops', icon: Upload },
   { name: 'Hotspot Analysis', href: '/hotspots', icon: Target },
   { name: 'Audit & Trust', href: '/audit', icon: Shield },
-  { name: 'Route Optimization', href: '/route-optimization', icon: Map },
+  // Removed: Route Optimization (not essential for Scope 3 compliance)
+  // ML Insights and Live APIs consolidated into Dashboard
 ];
 
 export function AppLayout() {
