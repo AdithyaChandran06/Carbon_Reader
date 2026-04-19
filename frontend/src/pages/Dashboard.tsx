@@ -252,11 +252,14 @@ export default function Dashboard() {
 
   const mlServiceOnline = apiHealth?.mlService?.status === 'ok';
   const apiConnected = !!apiStatus?.message;
-  const recommendations = mlServiceOnline && mlRecsData?.recommendations?.length
+  const safeStoredRecommendations = Array.isArray(storedRecommendations) ? storedRecommendations : [];
+  const recommendations = mlServiceOnline && Array.isArray(mlRecsData?.recommendations) && mlRecsData.recommendations.length
     ? mlRecsData.recommendations
-    : normalizeStoredRecommendations(storedRecommendations);
-  const totalPotentialReduction = mlRecsData?.totalPotentialReduction ?? recommendations.reduce((sum, rec) => sum + rec.potentialReduction, 0);
-  const totalCostSavings = recommendations.reduce((sum, rec) => sum + Math.abs(rec.costImpact), 0);
+    : normalizeStoredRecommendations(safeStoredRecommendations);
+  const totalPotentialReduction = Number(
+    mlRecsData?.totalPotentialReduction ?? recommendations.reduce((sum, rec) => sum + rec.potentialReduction, 0)
+  ) || 0;
+  const totalCostSavings = Number(recommendations.reduce((sum, rec) => sum + Math.abs(rec.costImpact), 0)) || 0;
   const recommendationCount = recommendations.length;
   const forecastChartData = [
     ...(forecastData?.historical ?? []).map((point) => ({
@@ -270,24 +273,30 @@ export default function Dashboard() {
       upper: point.upper,
     })),
   ];
-  const anomalyRows = anomalyData?.results?.filter((record) => record.isAnomaly).sort((a, b) => a.anomalyScore - b.anomalyScore) ?? [];
+  const anomalyRows = Array.isArray(anomalyData?.results)
+    ? anomalyData.results.filter((record) => record.isAnomaly).sort((a, b) => a.anomalyScore - b.anomalyScore)
+    : [];
   const highPriorityRecs = recommendations.filter((rec) => rec.priority === 'High');
   const mediumPriorityRecs = recommendations.filter((rec) => rec.priority === 'Medium');
   const lowPriorityRecs = recommendations.filter((rec) => rec.priority === 'Low');
-  const categoryChartData = categoryBreakdown.map((item) => ({
+  const safeCategoryBreakdown = Array.isArray(categoryBreakdown) ? categoryBreakdown : [];
+  const safeSuppliers = Array.isArray(suppliers) ? suppliers : [];
+  const safeMaterialHotspots = Array.isArray(materialHotspots) ? materialHotspots : [];
+  const safeTransportModes = Array.isArray(transportModes) ? transportModes : [];
+  const categoryChartData = safeCategoryBreakdown.map((item) => ({
     name: item.name,
     emissions: item.emissions,
     color: item.color,
   }));
-  const supplierChartData = suppliers.slice(0, 5).map((supplier) => ({
+  const supplierChartData = safeSuppliers.slice(0, 5).map((supplier) => ({
     name: supplier.name,
     emissions: supplier.totalEmissions,
   }));
-  const hotspotChartData = materialHotspots.slice(0, 5).map((hotspot) => ({
+  const hotspotChartData = safeMaterialHotspots.slice(0, 5).map((hotspot) => ({
     name: hotspot.material,
     emissions: hotspot.emissions,
   }));
-  const transportChartData = transportModes.slice(0, 5).map((mode) => ({
+  const transportChartData = safeTransportModes.slice(0, 5).map((mode) => ({
     name: mode.mode,
     emissions: mode.emissions,
   }));
