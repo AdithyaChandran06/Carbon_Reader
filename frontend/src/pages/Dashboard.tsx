@@ -33,7 +33,9 @@ import type { Recommendation, Supplier, TransportMode, MaterialHotspot } from '@
 
 const API_BASE = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`
-  : 'https://carbon-reader.onrender.com/api';
+  : import.meta.env.DEV
+    ? 'http://localhost:5000/api'
+    : 'https://carbon-reader.onrender.com/api';
 
 async function apiPost<T>(endpoint: string, body?: object): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -43,8 +45,16 @@ async function apiPost<T>(endpoint: string, body?: object): Promise<T> {
   });
 
   if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message || `API error: ${res.status}`);
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      try {
+        const data = await res.json();
+        throw new Error(data?.error || `API error: ${res.status}`);
+      } catch {
+        throw new Error(`API error: ${res.status}`);
+      }
+    }
+    throw new Error(`API error: ${res.status} ${res.statusText}`);
   }
 
   return res.json();
@@ -627,6 +637,8 @@ export default function Dashboard() {
                   Material hotspot ranking is shown because the ML anomaly service is unavailable.
                 </p>
               </>
+            ) : (
+              <p className="py-10 text-center text-sm text-muted-foreground">No anomaly insights available yet.</p>
             )}
           </CardContent>
         </Card>

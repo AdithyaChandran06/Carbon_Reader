@@ -12,7 +12,9 @@ import type {
 // Base API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`
-  : 'https://carbon-reader.onrender.com/api';
+  : import.meta.env.DEV
+    ? 'http://localhost:5000/api'
+    : 'https://carbon-reader.onrender.com/api';
 
 console.log('🔗 API Base URL:', API_BASE_URL);
 
