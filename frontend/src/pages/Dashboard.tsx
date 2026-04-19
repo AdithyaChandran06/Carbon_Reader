@@ -219,6 +219,8 @@ export default function Dashboard() {
     queryFn: () => apiPost<ForecastResult>('/ml/forecast', { months_ahead: 6 }),
     enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
     refetchInterval: 30000,
+    retry: 1,
+    staleTime: 60000,
   });
 
   const { data: anomalyData, error: anomalyError, isLoading: anomalyLoading } = useQuery<AnomalyResult>({
@@ -226,6 +228,8 @@ export default function Dashboard() {
     queryFn: () => apiPost<AnomalyResult>('/ml/anomalies', { contamination: 0.1 }),
     enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
     refetchInterval: 30000,
+    retry: 1,
+    staleTime: 60000,
   });
 
   const { data: clusterData, error: clusterError, isLoading: clusterLoading } = useQuery<ClusterResult>({
@@ -233,6 +237,8 @@ export default function Dashboard() {
     queryFn: () => apiPost<ClusterResult>('/ml/cluster', { n_clusters: 4 }),
     enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
     refetchInterval: 30000,
+    retry: 1,
+    staleTime: 60000,
   });
 
   const { data: mlRecsData, error: recsError, isLoading: recsLoading } = useQuery<MLRecsResult>({
@@ -240,6 +246,8 @@ export default function Dashboard() {
     queryFn: () => apiPost<MLRecsResult>('/ml/recommendations'),
     enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
     refetchInterval: 30000,
+    retry: 1,
+    staleTime: 60000,
   });
 
   if (metricsLoading && !metrics) {
@@ -308,6 +316,19 @@ export default function Dashboard() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             We could not load the summary metrics. {metricsError instanceof Error ? metricsError.message : 'Please try again.'}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {(forecastError || anomalyError || clusterError || recsError) && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Some ML insights failed to load. The dashboard will show live analytics instead.
+            {forecastError && ` Forecast: ${forecastError instanceof Error ? forecastError.message : 'error'}.`}
+            {anomalyError && ` Anomalies: ${anomalyError instanceof Error ? anomalyError.message : 'error'}.`}
+            {clusterError && ` Clusters: ${clusterError instanceof Error ? clusterError.message : 'error'}.`}
+            {recsError && ` Recommendations: ${recsError instanceof Error ? recsError.message : 'error'}.`}
           </AlertDescription>
         </Alert>
       )}

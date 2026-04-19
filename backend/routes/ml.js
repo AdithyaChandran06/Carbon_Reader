@@ -144,7 +144,7 @@ router.post("/anomalies", async (req, res) => {
     if (records.length < 4) {
       return res.json({
         results: [],
-        message: "Need at least 4 records for anomaly detection",
+        summary: { total: 0, anomalies: 0, normalRecords: 0 },
       });
     }
     const payload = {
@@ -153,13 +153,15 @@ router.post("/anomalies", async (req, res) => {
     };
 
     const external = await tryExternalML("/anomalies", payload);
-    if (external.data) return res.json(external.data);
+    const result = external.data || fallbackAnomalies(records, payload.contamination);
 
-    res.json({
-      ...fallbackAnomalies(records, payload.contamination),
-      engine: "local",
-      fallbackReason: external.error?.message,
-    });
+    // Ensure clean response shape
+    const cleanedResult = {
+      results: Array.isArray(result.results) ? result.results : [],
+      summary: result.summary || { total: 0, anomalies: 0, normalRecords: 0 },
+    };
+
+    res.json(cleanedResult);
   } catch (err) {
     console.error("ML anomalies error:", err.message);
     res.status(500).json({ error: err.message });
@@ -174,7 +176,7 @@ router.post("/cluster", async (req, res) => {
   try {
     const records = await loadRecordsForML(req.body?.filters || {});
     if (records.length < 2) {
-      return res.json({ clusters: [], message: "Need at least 2 records to cluster" });
+      return res.json({ clusters: [] });
     }
     const payload = {
       records,
@@ -182,13 +184,14 @@ router.post("/cluster", async (req, res) => {
     };
 
     const external = await tryExternalML("/cluster", payload);
-    if (external.data) return res.json(external.data);
+    const result = external.data || fallbackCluster(records, payload.n_clusters);
 
-    res.json({
-      ...fallbackCluster(records, payload.n_clusters),
-      engine: "local",
-      fallbackReason: external.error?.message,
-    });
+    // Ensure clean response shape
+    const cleanedResult = {
+      clusters: Array.isArray(result.clusters) ? result.clusters : [],
+    };
+
+    res.json(cleanedResult);
   } catch (err) {
     console.error("ML cluster error:", err.message);
     res.status(500).json({ error: err.message });
@@ -209,13 +212,17 @@ router.post("/forecast", async (req, res) => {
     };
 
     const external = await tryExternalML("/forecast", payload);
-    if (external.data) return res.json(external.data);
+    const result = external.data || fallbackForecast(records, payload.months_ahead, payload.category);
 
-    res.json({
-      ...fallbackForecast(records, payload.months_ahead, payload.category),
-      engine: "local",
-      fallbackReason: external.error?.message,
-    });
+    // Ensure clean response shape
+    const cleanedResult = {
+      historical: Array.isArray(result.historical) ? result.historical : [],
+      forecast: Array.isArray(result.forecast) ? result.forecast : [],
+      category: result.category || "All",
+      monthsAhead: result.monthsAhead || payload.months_ahead,
+    };
+
+    res.json(cleanedResult);
   } catch (err) {
     console.error("ML forecast error:", err.message);
     res.status(500).json({ error: err.message });
@@ -230,24 +237,26 @@ router.post("/recommendations", async (req, res) => {
   try {
     const records = await loadRecordsForML();
     if (records.length === 0) {
-      return res.json({ recommendations: [] });
+      return res.json({ recommendations: [], totalPotentialReduction: 0 });
     }
     const external = await tryExternalML("/recommendations", { records });
     const result = external.data || fallbackRecommendations(records);
 
+    // Ensure clean response shape
+    const cleanedResult = {
+      recommendations: Array.isArray(result.recommendations) ? result.recommendations : [],
+      totalPotentialReduction: typeof result.totalPotentialReduction === 'number' ? result.totalPotentialReduction : 0,
+    };
+
     // Optionally save generated recommendations to MongoDB
     const Recommendation = require("../models/Recommendation");
-    if (req.body?.save && result.recommendations?.length > 0) {
+    if (req.body?.save && cleanedResult.recommendations?.length > 0) {
       await Recommendation.deleteMany({ source: "ml" });
-      const docs = result.recommendations.map((r) => ({ ...r, source: "ml", isActive: true }));
+      const docs = cleanedResult.recommendations.map((r) => ({ ...r, source: "ml", isActive: true }));
       await Recommendation.insertMany(docs);
     }
 
-    res.json({
-      ...result,
-      engine: external.data ? "external" : "local",
-      fallbackReason: external.error?.message,
-    });
+    res.json(cleanedResult);
   } catch (err) {
     console.error("ML recommendations error:", err.message);
     res.status(500).json({ error: err.message });
