@@ -141,6 +141,11 @@ const DIFFICULTY_COLOR: Record<string, string> = {
 
 const CLUSTER_COLORS = ['#1D9E75', '#378ADD', '#BA7517', '#D85A30'];
 
+function toSafeNumber(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function normalizeStoredRecommendations(recommendations: Recommendation[]): MLRecommendation[] {
   return recommendations
     .slice()
@@ -293,9 +298,17 @@ export default function Dashboard() {
   const recommendations = Array.isArray(mlRecsData?.recommendations) && mlRecsData.recommendations.length
     ? mlRecsData.recommendations
     : normalizeStoredRecommendations(safeStoredRecommendations);
-  const totalPotentialReduction = Number(
-    mlRecsData?.totalPotentialReduction ?? recommendations.reduce((sum, rec) => sum + rec.potentialReduction, 0)
-  ) || 0;
+  const mlReportedReduction = toSafeNumber(mlRecsData?.totalPotentialReduction);
+  const recommendationsDerivedReduction = toSafeNumber(
+    recommendations.reduce((sum, rec) => sum + toSafeNumber(rec.potentialReduction), 0)
+  );
+  const analyticsReportedReduction = toSafeNumber(metrics?.potentialReduction);
+  const totalPotentialReduction =
+    mlReportedReduction > 0
+      ? mlReportedReduction
+      : recommendationsDerivedReduction > 0
+        ? recommendationsDerivedReduction
+        : analyticsReportedReduction;
   const totalCostSavings = Number(recommendations.reduce((sum, rec) => sum + Math.abs(rec.costImpact), 0)) || 0;
   const recommendationCount = recommendations.length;
   const forecastChartData = [
