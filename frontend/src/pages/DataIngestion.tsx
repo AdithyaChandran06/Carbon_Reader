@@ -1,16 +1,14 @@
 import { useState, useCallback } from 'react';
 import React from 'react';
-import { Upload, FileText, Truck, Users, Link2, CheckCircle, AlertCircle, Clock, Loader2, Database, FileSpreadsheet, Download, RefreshCw, Trash2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Clock, Loader2, Database, FileSpreadsheet, RefreshCw, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUploadedFiles, uploadFile, clearDatabase } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
-import type { UploadedFile, FileStatus } from '@/types/carbon';
-import { Progress } from '@/components/ui/progress';
+import type { FileStatus } from '@/types/carbon';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +36,7 @@ export default function DataIngestion() {
   const queryClient = useQueryClient();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const { data: files = [], isLoading } = useQuery({
+  const { data: files = [] } = useQuery({
     queryKey: ['uploadedFiles'],
     queryFn: getUploadedFiles,
     refetchInterval: 3000, // Poll every 3s to update Processing -> Processed status
@@ -239,332 +237,201 @@ export default function DataIngestion() {
         </Card>
       </div>
 
-      <Tabs defaultValue="upload" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-3">
-          <TabsTrigger value="upload" className="gap-2">
-            <Upload className="h-4 w-4" />
-            File Upload
-          </TabsTrigger>
-          <TabsTrigger value="files" className="gap-2">
-            <FileText className="h-4 w-4" />
-            Uploaded Files
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="gap-2">
-            <Download className="h-4 w-4" />
-            Templates
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="upload" className="mt-6">
-          <div className="grid gap-6">
-            {/* Upload Instructions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Upload Scope 3 Data Files
-                </CardTitle>
-                <CardDescription>
-                  Upload CSV files containing purchased goods, transport, or energy-related Scope 3 activity data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  className={`
-                    flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg transition-all
-                    ${isDragging ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-border hover:border-primary/50 hover:bg-muted/50'}
-                  `}
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                      <Upload className="h-8 w-8 text-primary" />
-                    </div>
-                    <p className="text-lg font-semibold mb-2">Drop your files here</p>
-                    <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
-                      Supports CSV, Excel (.xlsx, .xls) files. Files will be automatically categorized based on filename.
-                    </p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".csv,.xlsx,.xls,.pdf"
-                      multiple
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
-                    <div className="flex gap-3">
-                      <Button 
-                        variant="default" 
-                        size="lg"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadMutation.isPending}
-                        className="gap-2"
-                      >
-                        {uploadMutation.isPending ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            Browse Files
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+      <div className="grid gap-6">
+        {/* Upload Instructions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Upload Scope 3 Data Files
+            </CardTitle>
+            <CardDescription>
+              Upload CSV files containing purchased goods, transport, or energy-related Scope 3 activity data
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={`
+                flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg transition-all
+                ${isDragging ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-border hover:border-primary/50 hover:bg-muted/50'}
+              `}
+            >
+              <div className="flex flex-col items-center">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Upload className="h-8 w-8 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* File Naming Guide */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">File Naming Guidelines</CardTitle>
-                <CardDescription>
-                  Use clear names so files are auto-mapped to Scope 3 activity types
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="p-4 rounded-lg border bg-card">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded bg-green-500/10 flex items-center justify-center">
-                        <span className="text-lg">📦</span>
-                      </div>
-                      <span className="font-semibold">Materials Data</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Include "material" in filename
-                    </p>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">
-                      materials_2024.csv
-                    </code>
-                  </div>
-                  <div className="p-4 rounded-lg border bg-card">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded bg-blue-500/10 flex items-center justify-center">
-                        <span className="text-lg">🚛</span>
-                      </div>
-                      <span className="font-semibold">Transport Data</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Include "transport" in filename
-                    </p>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">
-                      transport_jan.csv
-                    </code>
-                  </div>
-                  <div className="p-4 rounded-lg border bg-card">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded bg-yellow-500/10 flex items-center justify-center">
-                        <span className="text-lg">⚡</span>
-                      </div>
-                      <span className="font-semibold">Energy Data</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Include "energy" in filename
-                    </p>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">
-                      energy_usage.csv
-                    </code>
-                  </div>
+                <p className="text-lg font-semibold mb-2">Drop your files here</p>
+                <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
+                  Supports CSV, Excel (.xlsx, .xls) files. Files will be automatically categorized based on filename.
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls,.pdf"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div className="flex gap-3">
+                  <Button
+                    variant="default"
+                    size="lg"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadMutation.isPending}
+                    className="gap-2"
+                  >
+                    {uploadMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        Browse Files
+                      </>
+                    )}
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="files" className="mt-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">All Uploaded Files</CardTitle>
-                  <CardDescription>
-                    View and manage your uploaded emission data files
-                  </CardDescription>
-                </div>
-                {files.length > 0 && (
-                  <Badge variant="outline" className="text-sm">
-                    {files.length} file{files.length !== 1 ? 's' : ''}
-                  </Badge>
-                )}
               </div>
-            </CardHeader>
-            <CardContent>
-              {files.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>File Name</TableHead>
-                      <TableHead>Source Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Upload Date</TableHead>
-                      <TableHead>Records</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {files.map((file) => {
-                      const StatusIcon = statusConfig[file.status].icon;
-                      return (
-                        <TableRow key={file.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{file.fileName}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="gap-1">
-                              {file.sourceType === 'Materials' ? '📦' : 
-                               file.sourceType === 'Transport' ? '🚛' : 
-                               file.sourceType === 'Energy' ? '⚡' : '📄'} {file.sourceType}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={statusConfig[file.status].variant} className="gap-1">
-                              <StatusIcon className="h-3 w-3" />
-                              {file.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {new Date(file.uploadDate).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm font-mono">
-                              {file.status === 'Processed' ? (file.recordCount ?? '-') : '-'}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-20" />
-                  <p className="text-muted-foreground mb-2">No files uploaded yet</p>
-                  <p className="text-sm text-muted-foreground">Upload your first file to get started</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="templates" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Download className="h-5 w-5" />
-                  CSV Templates
-                </CardTitle>
+        {/* File Naming Guide */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">File Naming Guidelines</CardTitle>
+            <CardDescription>
+              Use clear names so files are auto-mapped to Scope 3 activity types
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="p-4 rounded-lg border bg-card">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-8 w-8 rounded bg-green-500/10 flex items-center justify-center">
+                    <span className="text-lg">📦</span>
+                  </div>
+                  <span className="font-semibold">Materials Data</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Include "material" in filename
+                </p>
+                <code className="text-xs bg-muted px-2 py-1 rounded">
+                  materials_2024.csv
+                </code>
+              </div>
+              <div className="p-4 rounded-lg border bg-card">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-8 w-8 rounded bg-blue-500/10 flex items-center justify-center">
+                    <span className="text-lg">🚛</span>
+                  </div>
+                  <span className="font-semibold">Transport Data</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Include "transport" in filename
+                </p>
+                <code className="text-xs bg-muted px-2 py-1 rounded">
+                  transport_jan.csv
+                </code>
+              </div>
+              <div className="p-4 rounded-lg border bg-card">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-8 w-8 rounded bg-yellow-500/10 flex items-center justify-center">
+                    <span className="text-lg">⚡</span>
+                  </div>
+                  <span className="font-semibold">Energy Data</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Include "energy" in filename
+                </p>
+                <code className="text-xs bg-muted px-2 py-1 rounded">
+                  energy_usage.csv
+                </code>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">All Uploaded Files</CardTitle>
                 <CardDescription>
-                  Download standardized templates for data uploads
+                  View and manage your uploaded emission data files
                 </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded bg-green-500/10 flex items-center justify-center">
-                        <span className="text-xl">📦</span>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Materials Template</p>
-                        <p className="text-xs text-muted-foreground">
-                          Material name, quantity, unit, supplier
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Download className="h-3 w-3" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded bg-blue-500/10 flex items-center justify-center">
-                        <span className="text-xl">🚛</span>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Transport Template</p>
-                        <p className="text-xs text-muted-foreground">
-                          Mode, distance, weight, route details
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Download className="h-3 w-3" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded bg-yellow-500/10 flex items-center justify-center">
-                        <span className="text-xl">⚡</span>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Energy Template</p>
-                        <p className="text-xs text-muted-foreground">
-                          Source, consumption, unit, facility
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Download className="h-3 w-3" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Template Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 rounded-lg border-2 border-blue-500/20 bg-blue-500/5">
-                    <h4 className="font-semibold mb-2 flex items-center gap-2">
-                      <span className="text-blue-600">ℹ️</span>
-                      Template Format
-                    </h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• CSV format with UTF-8 encoding</li>
-                      <li>• Header row with column names included</li>
-                      <li>• Date format: YYYY-MM-DD</li>
-                      <li>• Numeric values: no commas, use decimal point</li>
-                    </ul>
-                  </div>
-                  <div className="p-4 rounded-lg border bg-card">
-                    <h4 className="font-semibold mb-2">Required Fields</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Each template contains mandatory and optional fields. Mandatory fields are marked with an asterisk (*) in the template header.
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-lg border bg-card">
-                    <h4 className="font-semibold mb-2">Sample Data</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Templates include sample rows to demonstrate proper formatting. Delete sample data before uploading your actual data.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-      </Tabs>
+              </div>
+              {files.length > 0 && (
+                <Badge variant="outline" className="text-sm">
+                  {files.length} file{files.length !== 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {files.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>File Name</TableHead>
+                    <TableHead>Source Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Upload Date</TableHead>
+                    <TableHead>Records</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {files.map((file) => {
+                    const StatusIcon = statusConfig[file.status].icon;
+                    return (
+                      <TableRow key={file.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{file.fileName}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="gap-1">
+                            {file.sourceType === 'Materials' ? '📦' :
+                             file.sourceType === 'Transport' ? '🚛' :
+                             file.sourceType === 'Energy' ? '⚡' : '📄'} {file.sourceType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusConfig[file.status].variant} className="gap-1">
+                            <StatusIcon className="h-3 w-3" />
+                            {file.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(file.uploadDate).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm font-mono">
+                            {file.status === 'Processed' ? (file.recordCount ?? '-') : '-'}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-20" />
+                <p className="text-muted-foreground mb-2">No files uploaded yet</p>
+                <p className="text-sm text-muted-foreground">Upload your first file to get started</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
