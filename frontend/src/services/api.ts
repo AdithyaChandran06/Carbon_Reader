@@ -154,12 +154,11 @@ export async function getApiStatus(): Promise<{ message: string; endpoints?: Rec
 }
 
 export async function getMLHealth(): Promise<{
-  mlService: { status: string };
-  nodeProxy: string;
-  error?: string;
-  hint?: string;
+  status: string;
+  engine: string;
+  message?: string;
 }> {
-  return apiCall('/ml/health');
+  return apiCall('/recommendations/health');
 }
 
 export async function getSupplierAnalysis(): Promise<Supplier[]> {
@@ -176,13 +175,12 @@ export async function getMaterialHotspots(): Promise<MaterialHotspot[]> {
 
 // Recommendations APIs
 export async function getRecommendations(): Promise<Recommendation[]> {
-  return apiCall<Recommendation[]>('/recommendations');
+  const response = await apiCall<{ recommendations?: Recommendation[] }>('/recommendations');
+  return Array.isArray(response?.recommendations) ? response.recommendations : [];
 }
 
 export async function generateRecommendations(): Promise<Recommendation[]> {
-  return apiCall<Recommendation[]>('/recommendations/generate', {
-    method: 'POST',
-  });
+  return getRecommendations();
 }
 
 // Data Lineage APIs

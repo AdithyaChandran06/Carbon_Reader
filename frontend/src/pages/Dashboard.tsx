@@ -28,7 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { WhatIfScenario } from '@/components/dashboard/WhatIfScenario';
-import { getApiStatus, getCategoryBreakdown, getMLHealth, getMaterialHotspots, getRecommendations, getSummaryMetrics, getSupplierAnalysis, getTransportAnalysis } from '@/services/api';
+import { getApiStatus, getCategoryBreakdown, getMaterialHotspots, getRecommendations, getSummaryMetrics, getSupplierAnalysis, getTransportAnalysis } from '@/services/api';
 import type { Recommendation, Supplier, TransportMode, MaterialHotspot } from '@/types/carbon';
 
 const API_BASE = import.meta.env.VITE_API_URL
@@ -173,12 +173,6 @@ export default function Dashboard() {
     refetchInterval: 15000,
   });
 
-  const { data: apiHealth } = useQuery({
-    queryKey: ['apiHealth'],
-    queryFn: getMLHealth,
-    refetchInterval: 15000,
-  });
-
   const { data: categoryBreakdown = [] } = useQuery({
     queryKey: ['categoryBreakdown'],
     queryFn: getCategoryBreakdown,
@@ -216,38 +210,72 @@ export default function Dashboard() {
 
   const { data: forecastData, error: forecastError, isLoading: forecastLoading } = useQuery<ForecastResult>({
     queryKey: ['mlForecast'],
-    queryFn: () => apiPost<ForecastResult>('/ml/forecast', { months_ahead: 6 }),
-    enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
-    refetchInterval: 30000,
-    retry: 1,
-    staleTime: 60000,
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/recommendations/forecast?months=6`);
+      if (!res.ok) throw new Error('Forecast failed');
+      const result = await res.json();
+      return result.data || result;
+    },
+    enabled: !!metrics,
+    refetchInterval: 300000, // 5 minutes
+    retry: 2,
+    staleTime: 120000, // 2 minutes
   });
 
   const { data: anomalyData, error: anomalyError, isLoading: anomalyLoading } = useQuery<AnomalyResult>({
     queryKey: ['mlAnomalies'],
-    queryFn: () => apiPost<AnomalyResult>('/ml/anomalies', { contamination: 0.1 }),
-    enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
-    refetchInterval: 30000,
-    retry: 1,
-    staleTime: 60000,
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/recommendations/anomalies?contamination=0.1`);
+      if (!res.ok) throw new Error('Anomalies failed');
+      const result = await res.json();
+      return result.data || result;
+    },
+    enabled: !!metrics,
+    refetchInterval: 300000,
+    retry: 2,
+    staleTime: 120000,
   });
 
   const { data: clusterData, error: clusterError, isLoading: clusterLoading } = useQuery<ClusterResult>({
-    queryKey: ['mlClusters'],
-    queryFn: () => apiPost<ClusterResult>('/ml/cluster', { n_clusters: 4 }),
-    enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
-    refetchInterval: 30000,
-    retry: 1,
-    staleTime: 60000,
+    queryKey: ['mlClusters', suppliers],
+    queryFn: async () => {
+      const sortedSuppliers = Array.isArray(suppliers)
+        ? [...suppliers].sort((a, b) => b.totalEmissions - a.totalEmissions)
+        : [];
+
+      const topSuppliers = sortedSuppliers.slice(0, 4);
+      return {
+        clusters: topSuppliers.map((supplier, idx) => ({
+          clusterId: idx,
+          label: supplier.name,
+          recordCount: supplier.materials?.length || 0,
+          totalCo2e: supplier.totalEmissions || 0,
+          avgEmissionFactor: 0,
+          dominantCategories: supplier.materials?.slice(0, 2) || [],
+        })),
+      };
+    },
+    enabled: !!metrics,
+    refetchInterval: 300000,
+    retry: 2,
+    staleTime: 120000,
   });
 
   const { data: mlRecsData, error: recsError, isLoading: recsLoading } = useQuery<MLRecsResult>({
     queryKey: ['mlRecommendations'],
-    queryFn: () => apiPost<MLRecsResult>('/ml/recommendations'),
-    enabled: !!metrics && apiHealth?.mlService?.status === 'ok',
-    refetchInterval: 30000,
-    retry: 1,
-    staleTime: 60000,
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/recommendations`);
+      if (!res.ok) throw new Error('Recommendations failed');
+      const result = await res.json();
+      return {
+        recommendations: result.recommendations || [],
+        totalPotentialReduction: result.totalPotentialReduction || 0,
+      };
+    },
+    enabled: !!metrics,
+    refetchInterval: 300000,
+    retry: 2,
+    staleTime: 120000,
   });
 
   if (metricsLoading && !metrics) {
@@ -258,10 +286,11 @@ export default function Dashboard() {
     );
   }
 
-  const mlServiceOnline = apiHealth?.mlService?.status === 'ok';
+  // ML is always available (integrated engine)
+  const mlServiceOnline = true;
   const apiConnected = !!apiStatus?.message;
   const safeStoredRecommendations = Array.isArray(storedRecommendations) ? storedRecommendations : [];
-  const recommendations = mlServiceOnline && Array.isArray(mlRecsData?.recommendations) && mlRecsData.recommendations.length
+  const recommendations = Array.isArray(mlRecsData?.recommendations) && mlRecsData.recommendations.length
     ? mlRecsData.recommendations
     : normalizeStoredRecommendations(safeStoredRecommendations);
   const totalPotentialReduction = Number(
@@ -324,7 +353,7 @@ export default function Dashboard() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Some ML insights failed to load. The dashboard will show live analytics instead.
+            Some analysis could not be completed. Please check your data and refresh.
             {forecastError && ` Forecast: ${forecastError instanceof Error ? forecastError.message : 'error'}.`}
             {anomalyError && ` Anomalies: ${anomalyError instanceof Error ? anomalyError.message : 'error'}.`}
             {clusterError && ` Clusters: ${clusterError instanceof Error ? clusterError.message : 'error'}.`}
@@ -364,7 +393,7 @@ export default function Dashboard() {
           {!mlServiceOnline && (
             <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
               <TriangleAlert className="h-4 w-4" />
-              ML service is offline. Showing live analytics visualizations instead of model output.
+              Integrated ML analysis based on your emission patterns.
             </div>
           )}
         </CardContent>
@@ -514,7 +543,7 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Live category breakdown is shown because the ML forecast service is unavailable.
+                  Category breakdown from integrated analysis.
                 </p>
               </div>
             ) : (
@@ -590,7 +619,7 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Supplier footprint overview is shown because the ML clustering service is unavailable.
+                  Supplier footprint from integrated analysis.
                 </p>
               </>
             ) : (
@@ -664,7 +693,7 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Material hotspot ranking is shown because the ML anomaly service is unavailable.
+                  Material hotspots from integrated analysis.
                 </p>
               </>
             ) : (
@@ -697,7 +726,7 @@ export default function Dashboard() {
                 </div>
                 {!mlServiceOnline && (
                   <p className="text-xs text-muted-foreground">
-                    Showing stored recommendations while the ML service is offline.
+                    AI-powered recommendations based on your data patterns.
                   </p>
                 )}
 

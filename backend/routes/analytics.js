@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const EmissionData = require("../models/EmissionData");
-const Recommendation = require("../models/Recommendation");
+const { generateRecommendations } = require("../ml/recommendationEngine");
 
 // GET /api/analytics/summary - Get dashboard summary metrics
 router.get("/summary", async (req, res) => {
@@ -24,19 +24,17 @@ router.get("/summary", async (req, res) => {
     
     const topHotspotEmissions = categoryTotals[topHotspot] || 0;
     
-    // Get recommendations count
-    const recommendations = await Recommendation.find({ isActive: true });
-    const potentialReduction = recommendations.reduce(
-      (sum, r) => sum + r.potentialReduction,
-      0
-    );
+    // Use integrated ML recommendation engine for summary insights
+    const recommendationResult = await generateRecommendations();
+    const potentialReduction = recommendationResult.totalPotentialReduction || 0;
+    const improvementSuggestions = recommendationResult.recommendations?.length || 0;
     
     res.json({
       totalEmissions: Math.round(totalEmissions),
       topHotspot,
       topHotspotEmissions: Math.round(topHotspotEmissions),
       potentialReduction: Math.round(potentialReduction),
-      improvementSuggestions: recommendations.length,
+      improvementSuggestions,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
